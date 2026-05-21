@@ -69,7 +69,7 @@ function Index() {
       <section className="mx-auto max-w-7xl px-6 pb-24 pt-6">
 
         {isLoading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
@@ -78,7 +78,7 @@ function Index() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {products?.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -86,9 +86,9 @@ function Index() {
         )}
       </section>
 
-      <footer className="border-t border-border bg-card/50">
-        <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} ClayCraft Studio — Crafted with care.
+      <footer className="border-t border-border bg-[var(--cream-soft)]">
+        <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Statuemini3d — Sculpting memories in 3D.
         </div>
       </footer>
     </div>
