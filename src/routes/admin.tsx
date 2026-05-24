@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Package, List, ClipboardList, ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { Plus, Trash2, Package, List, ClipboardList, ArrowLeft, Upload, Loader2, Download, Image } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ type OrderItem = {
   id: string;
   size: string;
   quantity: number;
+  reference_image_path: string | null;
   products: {
     name: string;
   } | null;
@@ -49,6 +50,68 @@ type Order = {
   created_at: string;
   custom_orders: OrderItem[];
 };
+
+function ReferenceImage({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function getUrl() {
+      try {
+        const { data, error } = await supabase.storage
+          .from("custom-uploads")
+          .createSignedUrl(path, 3600); // 1 hour expiry
+        if (error) throw error;
+        setUrl(data.signedUrl);
+      } catch (err) {
+        console.error("Error generating signed URL:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getUrl();
+  }, [path]);
+
+  if (loading) return <span className="text-muted-foreground animate-pulse text-xs">Loading image...</span>;
+  if (!url) return <span className="text-destructive text-xs">Failed to load image</span>;
+
+  const downloadUrl = (() => {
+    try {
+      const u = new URL(url);
+      const filename = path.split("/").pop() ?? "reference-image.jpg";
+      u.searchParams.append("download", filename);
+      return u.toString();
+    } catch (e) {
+      return url;
+    }
+  })();
+
+  return (
+    <div className="flex items-center gap-3 mt-2 bg-secondary/35 p-2 rounded-lg max-w-sm">
+      <img src={url} alt="Reference" className="h-14 w-14 rounded object-cover border border-border" />
+      <div className="flex flex-col gap-1 text-left">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline font-medium text-[11px] flex items-center gap-1"
+        >
+          View Full Image
+        </a>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 text-[10px] gap-1 px-2 py-0.5"
+          asChild
+        >
+          <a href={downloadUrl} download>
+            <Download className="h-3 w-3" /> Download
+          </a>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function AdminPage() {
   const { user, loading: authLoading } = useAuth();
@@ -450,12 +513,17 @@ function AdminPage() {
                           <h4 className="font-serif font-semibold text-sm text-foreground mb-2">Items Ordered</h4>
                           <ul className="divide-y divide-border/40 text-xs">
                             {order.custom_orders?.map((item) => (
-                              <li key={item.id} className="py-2 flex justify-between">
-                                <div>
-                                  <span className="font-medium text-foreground">{item.products?.name ?? "Custom Statue"}</span>
-                                  <span className="text-muted-foreground ml-2">({item.size.replace("inch", " inch")})</span>
+                              <li key={item.id} className="py-3 flex flex-col gap-1">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <span className="font-medium text-foreground">{item.products?.name ?? "Custom Statue"}</span>
+                                    <span className="text-muted-foreground ml-2">({item.size.replace("inch", " inch")})</span>
+                                  </div>
+                                  <div className="text-muted-foreground">Qty: {item.quantity}</div>
                                 </div>
-                                <div className="text-muted-foreground">Qty: {item.quantity}</div>
+                                {item.reference_image_path && (
+                                  <ReferenceImage path={item.reference_image_path} />
+                                )}
                               </li>
                             ))}
                           </ul>
