@@ -172,8 +172,22 @@ function AdminPage() {
 
   // Delete Product Mutation
   const deleteProductMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+    mutationFn: async (product: Product) => {
+      // 1. Delete preview image from public product-images bucket if it exists in storage
+      if (product.image_url && product.image_url.includes("product-images")) {
+        const filename = product.image_url.split("/").pop();
+        if (filename) {
+          const { error: storageErr } = await supabase.storage
+            .from("product-images")
+            .remove([filename]);
+          if (storageErr) {
+            console.error("Failed to delete product image from storage:", storageErr);
+          }
+        }
+      }
+
+      // 2. Delete database record
+      const { error } = await supabase.from("products").delete().eq("id", product.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -402,7 +416,7 @@ function AdminPage() {
                                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete "${prod.name}"?`)) {
-                                    deleteProductMutation.mutate(prod.id);
+                                    deleteProductMutation.mutate(prod);
                                   }
                                 }}
                               >
