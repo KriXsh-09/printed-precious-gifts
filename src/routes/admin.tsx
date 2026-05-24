@@ -189,14 +189,37 @@ function AdminPage() {
   // Delete Order Mutation
   const deleteOrderMutation = useMutation({
     mutationFn: async (id: string) => {
-      // 1. Delete associated custom orders first to avoid orphans
+      // 1. Fetch custom orders to get their reference image paths
+      const { data: items, error: fetchErr } = await supabase
+        .from("custom_orders")
+        .select("reference_image_path")
+        .eq("order_id", id);
+      if (fetchErr) throw fetchErr;
+
+      // 2. Extract non-null reference image paths
+      const paths = items
+        ?.map((item) => item.reference_image_path)
+        .filter((path): path is string => !!path) ?? [];
+
+      // 3. Delete files from Supabase Storage custom-uploads bucket
+      if (paths.length > 0) {
+        const { error: storageErr } = await supabase.storage
+          .from("custom-uploads")
+          .remove(paths);
+        if (storageErr) {
+          console.error("Failed to delete files from storage:", storageErr);
+          // Log but proceed with DB deletion so records are not stuck
+        }
+      }
+
+      // 4. Delete associated custom orders first to avoid orphans
       const { error: customErr } = await supabase
         .from("custom_orders")
         .delete()
         .eq("order_id", id);
       if (customErr) throw customErr;
 
-      // 2. Delete the order record
+      // 5. Delete the order record
       const { error: orderErr } = await supabase
         .from("orders")
         .delete()
