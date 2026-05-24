@@ -58,7 +58,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-soft)]">
         <Link to="/" className="mb-6 block text-center">
-          <span className="font-serif text-2xl font-semibold text-primary">ClayCraft</span>
+          <span className="font-serif text-2xl font-semibold text-primary">GiftWorldOnline</span>
         </Link>
         <h1 className="font-serif text-3xl tracking-tight text-foreground">
           {mode === "signin" ? "Welcome back" : "Create an account"}
