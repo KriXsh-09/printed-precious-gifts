@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          order_id: string | null
           product_id: string | null
           quantity: number
           reference_image_path: string | null
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          order_id?: string | null
           product_id?: string | null
           quantity: number
           reference_image_path?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          order_id?: string | null
           product_id?: string | null
           quantity?: number
           reference_image_path?: string | null
@@ -54,6 +57,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -90,6 +100,50 @@ export type Database = {
           price_8inch?: number
         }
         Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_name: string
+          id: string
+          phone_number: string
+          pincode: string
+          shipping_address: string
+          status: string
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          id?: string
+          phone_number: string
+          pincode: string
+          shipping_address: string
+          status?: string
+          total_amount: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          phone_number?: string
+          pincode?: string
+          shipping_address?: string
+          status?: string
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {

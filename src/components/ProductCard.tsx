@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-1 flex-col gap-3 pt-4">
         <h3 className="font-serif text-base text-foreground line-clamp-2">{product.name}</h3>
         <p className="font-serif text-base text-foreground">
-          From <span className="font-semibold">${product.price_4inch.toFixed(2)}</span>
+          From <span className="font-semibold">₹{product.price_4inch.toFixed(2)}</span>
         </p>
         <Button
           onClick={() => setOpen(true)}

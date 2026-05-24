@@ -76,13 +76,17 @@ export function CustomOrderModal({
         .upload(path, file, { cacheControl: "3600", upsert: false });
       if (upErr) throw upErr;
 
-      const { error: orderErr } = await supabase.from("custom_orders").insert({
-        user_id: user.id,
-        product_id: product.id,
-        size,
-        quantity,
-        reference_image_path: path,
-      });
+      const { data: orderData, error: orderErr } = await supabase
+        .from("custom_orders")
+        .insert({
+          user_id: user.id,
+          product_id: product.id,
+          size,
+          quantity,
+          reference_image_path: path,
+        })
+        .select("id")
+        .single();
       if (orderErr) throw orderErr;
 
       addItem({
@@ -93,6 +97,7 @@ export function CustomOrderModal({
         price: unitPrice,
         custom: true,
         referencePath: path,
+        dbId: orderData.id,
       });
       toast.success("Custom order added to your cart");
       onOpenChange(false);
@@ -124,9 +129,9 @@ export function CustomOrderModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="4inch">4 inch — ${product.price_4inch}</SelectItem>
-                <SelectItem value="6inch">6 inch — ${product.price_6inch}</SelectItem>
-                <SelectItem value="8inch">8 inch — ${product.price_8inch}</SelectItem>
+                <SelectItem value="4inch">4 inch — ₹{product.price_4inch}</SelectItem>
+                <SelectItem value="6inch">6 inch — ₹{product.price_6inch}</SelectItem>
+                <SelectItem value="8inch">8 inch — ₹{product.price_8inch}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -168,7 +173,7 @@ export function CustomOrderModal({
           <div className="flex items-center justify-between rounded-lg bg-secondary/60 px-4 py-3">
             <span className="text-sm text-muted-foreground">Subtotal</span>
             <span className="font-serif text-xl font-semibold text-primary">
-              ${(unitPrice * quantity).toFixed(2)}
+              ₹{(unitPrice * quantity).toFixed(2)}
             </span>
           </div>
         </div>

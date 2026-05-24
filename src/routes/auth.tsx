@@ -11,8 +11,8 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "Sign in — ClayCraft Studio" },
-      { name: "description", content: "Sign in or create your ClayCraft account." },
+      { title: "Sign in — GiftWorldOnline" },
+      { name: "description", content: "Sign in or create your GiftWorldOnline account." },
     ],
   }),
 });

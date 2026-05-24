@@ -63,9 +63,9 @@ create policy "users read own files" on storage.objects for select
 
 -- seed sample products
 insert into public.products (name, description, image_url, price_4inch, price_6inch, price_8inch) values
-('Heroic Knight', 'A gallant knight in detailed armor, perfect as a centerpiece gift.', null, 24.00, 38.00, 56.00),
-('Whimsical Fox', 'Playful fox figurine with stylized features and a charming pose.', null, 22.00, 34.00, 50.00),
-('Tiny Astronaut', 'An adorable astronaut floating mid-step, ideal for dreamers.', null, 26.00, 40.00, 58.00),
-('Garden Fairy', 'Delicate fairy with lace-like wings perched on a flower.', null, 25.00, 39.00, 57.00),
-('Mini Dragon', 'Coiled mini dragon with intricate scale detail.', null, 28.00, 42.00, 60.00),
-('Custom Bust', 'Personalized bust of someone special — upload a photo to begin.', null, 30.00, 46.00, 68.00);
+('Heroic Knight', 'A gallant knight in detailed armor, perfect as a centerpiece gift.', null, 3500, 6500, 8500),
+('Whimsical Fox', 'Playful fox figurine with stylized features and a charming pose.', null, 4500, 6500, 8500),
+('Tiny Astronaut', 'An adorable astronaut floating mid-step, ideal for dreamers.', null, 5000, 6500, 9000),
+('Garden Fairy', 'Delicate fairy with lace-like wings perched on a flower.', null, 5500, 6500, 8500),
+('Mini Dragon', 'Coiled mini dragon with intricate scale detail.', null, 5500, 6500, 8500),
+('Custom Bust', 'Personalized bust of someone special — upload a photo to begin.', null, 7000, 8000, 9500);

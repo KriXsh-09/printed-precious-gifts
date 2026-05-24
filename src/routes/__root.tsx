@@ -75,14 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ClayCraft Studio — Custom Mini 3D Statues" },
+      { title: "GiftWorldonline — Custom 3D Statues" },
       {
         name: "description",
         content:
-          "Hand-finished mini 3D printed statues in 4, 6 and 8 inch sizes. Browse the collection or order your own custom piece.",
+          "Hand-finished 3D printed statues in 4, 6 and 8 inch sizes. Browse the collection or order your own custom piece.",
       },
-      { property: "og:title", content: "ClayCraft Studio — Custom Mini 3D Statues" },
-      { property: "og:description", content: "Mini 3D printed statues, made to order." },
+      { property: "og:title", content: "GiftWorldonline — Custom 3D Statues" },
+      { property: "og:description", content: "3D printed statues, made to order." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

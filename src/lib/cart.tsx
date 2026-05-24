@@ -9,6 +9,7 @@ export type CartItem = {
   price: number;
   custom?: boolean;
   referencePath?: string;
+  dbId?: string;
 };
 
 type CartContextType = {

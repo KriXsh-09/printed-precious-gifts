@@ -25,35 +25,30 @@ function Index() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-background">
+      <section className="relative w-full min-h-[450px] md:min-h-0 md:aspect-[1280/623] overflow-hidden">
         <div
-          className="absolute inset-0 -z-10 opacity-70"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            background:
-              "radial-gradient(ellipse at 20% 30%, var(--cream) 0%, transparent 55%), radial-gradient(ellipse at 80% 70%, var(--cream-soft) 0%, transparent 60%)",
+            backgroundImage: "url('https://i.postimg.cc/T3w89btz/heroimage.png')",
           }}
         />
-        <div className="mx-auto max-w-7xl px-6 pt-12 pb-20 text-center md:pt-20 md:pb-28">
-          <h1 className="font-serif text-4xl tracking-[0.08em] text-primary md:text-6xl">
-            PERSONALISED 3D FIGURINES
-          </h1>
-          <p className="mt-6 font-serif text-lg tracking-[0.3em] text-muted-foreground md:text-xl">
-            WWW.STATUEMINI3D.COM
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <a
-              href="#collection"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-7 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-            >
-              Shop the collection
-            </a>
-            <a
-              href="#collection"
-              className="inline-flex items-center justify-center rounded-md border border-border bg-[var(--cream-soft)] px-7 py-3 text-sm font-medium text-foreground transition hover:bg-[var(--cream)]"
-            >
-              Order your own
-            </a>
+        <div className="relative z-10 w-full h-full flex flex-col justify-end items-center pb-[38px] px-6">
+          <div className="max-w-2xl text-center flex flex-col items-center">
+
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              <a
+                href="#collection"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2 text-xs md:text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0"
+              >
+                Shop the collection
+              </a>
+              <a
+                href="#collection"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-[var(--cream-soft)] px-5 py-2 text-xs md:text-sm font-medium text-foreground transition hover:bg-[var(--cream)] hover:translate-y-[-1px] active:translate-y-0"
+              >
+                Order your own
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -88,7 +83,7 @@ function Index() {
 
       <footer className="border-t border-border bg-[var(--cream-soft)]">
         <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Statuemini3d — Sculpting memories in 3D.
+          © {new Date().getFullYear()} GiftWorldonline — Sculpting memories in 3D.
         </div>
       </footer>
     </div>
