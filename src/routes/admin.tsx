@@ -186,6 +186,32 @@ function AdminPage() {
     },
   });
 
+  // Delete Order Mutation
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // 1. Delete associated custom orders first to avoid orphans
+      const { error: customErr } = await supabase
+        .from("custom_orders")
+        .delete()
+        .eq("order_id", id);
+      if (customErr) throw customErr;
+
+      // 2. Delete the order record
+      const { error: orderErr } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", id);
+      if (orderErr) throw orderErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Order deleted successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message ?? "Failed to delete order");
+    },
+  });
+
   // Add Product Submit
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
@@ -482,18 +508,32 @@ function AdminPage() {
                     {orders.map((order) => (
                       <div key={order.id} className="rounded-lg border border-border/80 bg-card/30 p-5 shadow-sm space-y-4">
                         <div className="flex flex-wrap items-center justify-between border-b border-border/50 pb-3 gap-2">
-                          <div>
-                            <span className="text-xs uppercase tracking-wider text-muted-foreground">Order ID</span>
-                            <p className="font-mono text-sm text-foreground">{order.id}</p>
+                          <div className="flex flex-wrap items-center gap-6">
+                            <div>
+                              <span className="text-xs uppercase tracking-wider text-muted-foreground">Order ID</span>
+                              <p className="font-mono text-sm text-foreground">{order.id}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs uppercase tracking-wider text-muted-foreground">Date Placed</span>
+                              <p className="text-sm text-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</span>
+                              <p className="font-serif text-base font-semibold text-primary">₹{order.total_amount}</p>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-xs uppercase tracking-wider text-muted-foreground">Date Placed</span>
-                            <p className="text-sm text-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</span>
-                            <p className="font-serif text-base font-semibold text-primary">₹{order.total_amount}</p>
-                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete the order from "${order.customer_name}"?`)) {
+                                deleteOrderMutation.mutate(order.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2 text-sm">
