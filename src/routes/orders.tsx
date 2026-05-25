@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useAuth } from "@/lib/auth-context";
 import { Package, Clock, CheckCircle2, Truck, PackageX, LogIn } from "lucide-react";
 
@@ -290,12 +291,7 @@ function OrdersPage() {
         )}
       </main>
 
-      <footer className="border-t border-border bg-[var(--cream-soft)]">
-        <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} GiftWorldonline — Sculpting memories in
-          3D.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

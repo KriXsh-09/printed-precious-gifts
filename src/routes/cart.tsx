@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trash2, ShoppingBag } from "lucide-react";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { toast } from "sonner";
@@ -202,6 +203,8 @@ Please confirm the order details. Thank you!`;
           </div>
         )}
       </main>
+
+      <Footer />
 
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent className="sm:max-w-md">

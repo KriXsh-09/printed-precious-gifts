@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { ProductCard, type Product } from "@/components/ProductCard";
+import { Footer } from "@/components/Footer";
 import { SearchX } from "lucide-react";
 
 type CatalogSearch = {
@@ -100,12 +101,7 @@ function CatalogPage() {
         )}
       </section>
 
-      <footer className="border-t border-border bg-[var(--cream-soft)]">
-        <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} GiftWorldonline — Sculpting memories in
-          3D.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

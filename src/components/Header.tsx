@@ -51,12 +51,20 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-[#fef6d5] backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between pl-0 pr-6">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center gap-3">
           <img
             src="https://i.postimg.cc/RFZwwqV2/Chat-GPT-Image-May-25-2026-09-01-01-AM.png"
             alt="GiftWorldOnline"
             className="h-14 w-auto object-contain"
           />
+          <div className="flex flex-col text-left">
+            <span className="font-serif text-2xl font-bold leading-tight text-primary">
+              GiftWorldOnline
+            </span>
+            <span className="text-xs text-muted-foreground font-medium tracking-wide mt-0.5">
+              Sculpting memories in 3D
+            </span>
+          </div>
         </Link>
 
         <div className="flex items-center gap-8">
@@ -64,20 +72,27 @@ export function Header() {
           <nav className="hidden items-center gap-8 md:flex">
             <Link
               to="/"
-              className="border-b-2 border-foreground pb-1 text-sm font-medium"
+              activeOptions={{ exact: true }}
+              activeProps={{ className: "border-b-2 border-foreground pb-1 text-foreground" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground pb-1" }}
+              className="text-sm font-medium transition"
             >
               Home
             </Link>
             <Link
               to="/catalog"
-              className="text-sm text-muted-foreground transition hover:text-foreground"
+              activeProps={{ className: "border-b-2 border-foreground pb-1 text-foreground" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground pb-1" }}
+              className="text-sm font-medium transition"
             >
               Catalog
             </Link>
             {user && (
               <Link
                 to="/orders"
-                className="text-sm text-muted-foreground transition hover:text-foreground"
+                activeProps={{ className: "border-b-2 border-foreground pb-1 text-foreground" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground pb-1" }}
+                className="text-sm font-medium transition"
               >
                 My Orders
               </Link>
@@ -126,13 +141,13 @@ export function Header() {
                 <>
                   {(user.email === import.meta.env.VITE_ADMIN_EMAIL ||
                     user.email?.toLowerCase() ===
-                      "admin@giftworldonline.com") && (
-                    <Link to="/admin">
-                      <Button variant="ghost" size="sm">
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
+                    "admin@giftworldonline.com") && (
+                      <Link to="/admin">
+                        <Button variant="ghost" size="sm">
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -192,16 +207,21 @@ export function Header() {
           <nav className="mt-8 flex flex-col gap-1">
             <Link
               to="/"
+              activeOptions={{ exact: true }}
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+              activeProps={{ className: "bg-secondary text-foreground" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-secondary/50" }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition"
             >
-              <Home className="h-4 w-4 text-muted-foreground" />
+              <Home className="h-4 w-4" />
               Home
             </Link>
             <Link
               to="/catalog"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              activeProps={{ className: "bg-secondary text-foreground" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-secondary/50" }}
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition"
             >
               <LayoutGrid className="h-4 w-4" />
               Catalog
@@ -211,7 +231,9 @@ export function Header() {
               <Link
                 to="/cart"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                activeProps={{ className: "bg-secondary text-foreground" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-secondary/50" }}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition"
               >
                 <ShoppingBag className="h-4 w-4" />
                 Cart
@@ -227,7 +249,9 @@ export function Header() {
               <Link
                 to="/orders"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                activeProps={{ className: "bg-secondary text-foreground" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-secondary/50" }}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition"
               >
                 <ClipboardList className="h-4 w-4" />
                 My Orders
@@ -237,11 +261,13 @@ export function Header() {
             {user &&
               (user.email === import.meta.env.VITE_ADMIN_EMAIL ||
                 user.email?.toLowerCase() ===
-                  "admin@giftworldonline.com") && (
+                "admin@giftworldonline.com") && (
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                  activeProps={{ className: "bg-secondary text-foreground" }}
+                  inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-secondary/50" }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition"
                 >
                   <User className="h-4 w-4" />
                   Admin
