@@ -48,8 +48,8 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-[#f5f0d0]/95 backdrop-blur">
+      <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center">
           <img
             src="https://i.postimg.cc/RFZwwqV2/Chat-GPT-Image-May-25-2026-09-01-01-AM.png"
