@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -25,23 +25,23 @@ function Index() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <section className="relative w-full min-h-[450px] md:min-h-0 md:aspect-[1280/623] overflow-hidden">
+      <section className="relative flex w-full min-h-[60vh] md:min-h-0 md:aspect-[1280/623] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('https://i.postimg.cc/T3w89btz/heroimage.png')",
           }}
         />
-        <div className="relative z-10 w-full h-full flex flex-col justify-end items-center pb-[38px] px-6">
+        <div className="relative z-10 w-full flex flex-1 flex-col justify-end items-center pb-[38px] px-6">
           <div className="max-w-2xl text-center flex flex-col items-center">
 
             <div className="mt-4 flex flex-wrap justify-center gap-3">
-              <a
-                href="#collection"
+              <Link
+                to="/catalog"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2 text-xs md:text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0"
               >
                 Shop the collection
-              </a>
+              </Link>
               <a
                 href="#collection"
                 className="inline-flex items-center justify-center rounded-md border border-border bg-[var(--cream-soft)] px-5 py-2 text-xs md:text-sm font-medium text-foreground transition hover:bg-[var(--cream)] hover:translate-y-[-1px] active:translate-y-0"
