@@ -259,11 +259,15 @@ function AdminPage() {
   // Update Order Status Mutation
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("orders")
         .update({ status })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Update blocked by database RLS policy. Admin update permissions are required.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
