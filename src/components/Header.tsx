@@ -50,20 +50,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--cream)] font-serif text-xl italic text-primary">
-            G
-          </div>
-          <div className="leading-tight">
-            <div className="font-serif text-2xl tracking-tight">
-              <span className="text-primary">Gift</span>
-              <span className="italic text-foreground">WorldOnline</span>
-              <sup className="ml-0.5 text-xs">®</sup>
-            </div>
-            <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              Sculpting memories in 3D
-            </div>
-          </div>
+        <Link to="/" className="flex items-center">
+          <img
+            src="https://i.postimg.cc/RFZwwqV2/Chat-GPT-Image-May-25-2026-09-01-01-AM.png"
+            alt="GiftWorldOnline"
+            className="h-14 w-auto object-contain"
+          />
         </Link>
 
         <div className="flex items-center gap-8">
