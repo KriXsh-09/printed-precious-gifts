@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Home,
+  ClipboardList,
   LayoutGrid,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -73,6 +74,14 @@ export function Header() {
             >
               Catalog
             </Link>
+            {user && (
+              <Link
+                to="/orders"
+                className="text-sm text-muted-foreground transition hover:text-foreground"
+              >
+                My Orders
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -211,6 +220,17 @@ export function Header() {
                     {count}
                   </span>
                 )}
+              </Link>
+            )}
+
+            {user && (
+              <Link
+                to="/orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              >
+                <ClipboardList className="h-4 w-4" />
+                My Orders
               </Link>
             )}
 
