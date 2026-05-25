@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -246,6 +253,24 @@ function AdminPage() {
     },
     onError: (err: any) => {
       toast.error(err.message ?? "Failed to delete order");
+    },
+  });
+
+  // Update Order Status Mutation
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Order status updated successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message ?? "Failed to update order status");
     },
   });
 
@@ -557,6 +582,33 @@ function AdminPage() {
                             <div>
                               <span className="text-xs uppercase tracking-wider text-muted-foreground">Total Amount</span>
                               <p className="font-serif text-base font-semibold text-primary">₹{order.total_amount}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs uppercase tracking-wider text-muted-foreground">Status</span>
+                              <div className="mt-1">
+                                <Select
+                                  value={order.status}
+                                  onValueChange={(status) => {
+                                    updateOrderStatusMutation.mutate({ id: order.id, status });
+                                  }}
+                                  disabled={
+                                    updateOrderStatusMutation.isPending &&
+                                    updateOrderStatusMutation.variables?.id === order.id
+                                  }
+                                >
+                                  <SelectTrigger className="w-[130px] h-8 text-xs font-medium cursor-pointer">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                                    <SelectItem value="processing">Processing</SelectItem>
+                                    <SelectItem value="shipped">Shipped</SelectItem>
+                                    <SelectItem value="delivered">Delivered</SelectItem>
+                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
                           <Button
