@@ -56,7 +56,7 @@ const defaultProducts: Product[] = [
     price: 49.00,
     rating: 4.9,
     reviews: 124,
-    image: '/prod_ganesha.png',
+    image: 'https://files.catbox.moe/hhyds5.png',
     collection_id: 'divine',
     is_popular: true,
     tag: 'Best Seller'
@@ -68,7 +68,7 @@ const defaultProducts: Product[] = [
     price: 129.00,
     rating: 4.8,
     reviews: 86,
-    image: '/prod_couple.png',
+    image: 'https://files.catbox.moe/zhjil3.png',
     collection_id: 'couples',
     is_popular: true,
     tag: 'Customizable'
@@ -80,7 +80,7 @@ const defaultProducts: Product[] = [
     price: 69.00,
     rating: 4.9,
     reviews: 210,
-    image: '/prod_lamp.png',
+    image: 'https://files.catbox.moe/ghoz6k.png',
     collection_id: 'lamps',
     is_popular: true,
     tag: 'Trending'
@@ -92,7 +92,7 @@ const defaultProducts: Product[] = [
     price: 39.00,
     rating: 4.7,
     reviews: 58,
-    image: '/prod_nameplate.png',
+    image: 'https://files.catbox.moe/ash2mc.png',
     collection_id: 'singles',
     is_popular: true,
     tag: 'New'
@@ -104,7 +104,7 @@ const defaultProducts: Product[] = [
     price: 59.00,
     rating: 4.9,
     reviews: 42,
-    image: '/hero_deity.png',
+    image: 'https://files.catbox.moe/rix4zz.png',
     collection_id: 'divine',
     is_popular: false
   },
@@ -115,7 +115,7 @@ const defaultProducts: Product[] = [
     price: 89.00,
     rating: 4.8,
     reviews: 31,
-    image: '/hero_deity.png',
+    image: 'https://files.catbox.moe/rix4zz.png',
     collection_id: 'divine',
     is_popular: false
   },
@@ -126,7 +126,7 @@ const defaultProducts: Product[] = [
     price: 99.00,
     rating: 4.9,
     reviews: 23,
-    image: '/hero_couple.png',
+    image: 'https://files.catbox.moe/j5bog0.png',
     collection_id: 'couples',
     is_popular: false
   },
@@ -137,7 +137,7 @@ const defaultProducts: Product[] = [
     price: 79.00,
     rating: 4.8,
     reviews: 19,
-    image: '/prod_couple.png',
+    image: 'https://files.catbox.moe/zhjil3.png',
     collection_id: 'singles',
     is_popular: false
   },
@@ -148,7 +148,7 @@ const defaultProducts: Product[] = [
     price: 99.00,
     rating: 4.9,
     reviews: 67,
-    image: '/prod_lamp.png',
+    image: 'https://files.catbox.moe/ghoz6k.png',
     collection_id: 'lamps',
     is_popular: false
   }
@@ -378,7 +378,7 @@ function App() {
         setData(jsonData);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         console.log('Backend API optional fetch bypassed, using default client-side data.');
         setLoading(false);
       });

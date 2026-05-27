@@ -16,7 +16,7 @@ const collections: CollectionItem[] = [
     title: 'Divine Statues',
     count: '24 Items',
     description: 'Elegantly detailed sculptures of deities, spiritual icons, and sacred symbols.',
-    image: '/hero_deity.png',
+    image: 'https://files.catbox.moe/rix4zz.png',
     href: '#collections/divine',
   },
   {
@@ -24,7 +24,7 @@ const collections: CollectionItem[] = [
     title: 'Customized Couples',
     count: '12 Items',
     description: 'Romantic couple miniature figurines and anniversary keepsakes made from photos.',
-    image: '/hero_couple.png',
+    image: 'https://files.catbox.moe/j5bog0.png',
     href: '#collections/couples',
   },
   {
@@ -32,7 +32,7 @@ const collections: CollectionItem[] = [
     title: 'Customized Singles',
     count: '18 Items',
     description: 'High-fidelity portrait busts, hobbyist miniatures, and personalized single figures.',
-    image: '/prod_couple.png', // Reusing couple/single statue visual
+    image: 'https://files.catbox.moe/zhjil3.png', // Reusing couple/single statue visual
     href: '#collections/singles',
   },
   {
@@ -40,7 +40,7 @@ const collections: CollectionItem[] = [
     title: 'Lithophane Lamps',
     count: '8 Items',
     description: 'Exquisite 3D-printed cylindrical and panel photo lamps with built-in warm LEDs.',
-    image: '/prod_lamp.png',
+    image: 'https://files.catbox.moe/ghoz6k.png',
     href: '#collections/lithophanes',
   },
 ];

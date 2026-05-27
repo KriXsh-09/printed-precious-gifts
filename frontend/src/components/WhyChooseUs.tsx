@@ -44,7 +44,7 @@ export const WhyChooseUs: React.FC = () => {
         <div className="wcu-center-col">
           <div className="wcu-image-wrapper">
             <img 
-              src="/why_choose_us.png" 
+              src="https://files.catbox.moe/cm1f6c.png" 
               alt="Custom 3D printed lithophane gift" 
               className="wcu-banner-img" 
             />

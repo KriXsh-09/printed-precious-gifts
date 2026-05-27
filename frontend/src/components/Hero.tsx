@@ -7,7 +7,7 @@ interface HeroProps {
   ctaHref?: string;
 }
 
-const slides = ['/hero_deity.png', '/hero_couple.png'];
+const slides = ['https://files.catbox.moe/rix4zz.png', 'https://files.catbox.moe/j5bog0.png'];
 
 export const Hero: React.FC<HeroProps> = ({
   title = 'Perfect Gifts for your loved ones',

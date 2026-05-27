@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left Logo Tab */}
       <div className="header-logo-tab">
         <a href="/" className="logo-link" onClick={closeAllMenus}>
-          <img src="/logo.jpg" alt="Giftworld Logo" className="logo-img" />
+          <img src="https://files.catbox.moe/n8hhzh.jpg" alt="Giftworld Logo" className="logo-img" />
           <span>{logoText}</span>
         </a>
       </div>
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="mobile-menu-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
               <div className="logo-link">
-                <img src="/logo.jpg" alt="Giftworld Logo" className="logo-img" />
+                <img src="https://files.catbox.moe/n8hhzh.jpg" alt="Giftworld Logo" className="logo-img" />
                 <span>{logoText}</span>
               </div>
               <button className="icon-btn close-btn" onClick={closeAllMenus}>

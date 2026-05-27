@@ -205,7 +205,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setPrice4in('');
     setPrice6in('');
     setPrice8in('');
-    setImage('/hero_deity.png'); // default fallback path
+    setImage('https://files.catbox.moe/rix4zz.png'); // default fallback path
     setCollectionId('divine');
     setIsPopular(false);
     setErrorMsg(null);

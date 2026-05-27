@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { supabase, isPlaceholderClient } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import type { Product } from '../App';
 import type { CartItem } from './CartDrawer';
 
@@ -17,8 +17,6 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
   isOpen,
   onClose,
   product,
-  userId,
-  userEmail,
   onAddToCart,
 }) => {
   const [selectedSize, setSelectedSize] = useState<'4"' | '6"' | '8"'>('4"');

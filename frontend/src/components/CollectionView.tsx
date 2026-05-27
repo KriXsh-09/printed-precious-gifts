@@ -12,22 +12,22 @@ const collectionMeta: Record<string, { title: string; desc: string; image: strin
   divine: {
     title: 'Divine Statues',
     desc: 'Elegantly detailed sculptures of deities, spiritual icons, and sacred symbols crafted with high-fidelity resin 3D printing.',
-    image: '/hero_deity.png',
+    image: 'https://files.catbox.moe/rix4zz.png',
   },
   couples: {
     title: 'Customized Couples',
     desc: 'Romantic couple miniature figurines and anniversary keepsakes made from your personal photos. Perfect for weddings and anniversaries.',
-    image: '/hero_couple.png',
+    image: 'https://files.catbox.moe/j5bog0.png',
   },
   singles: {
     title: 'Customized Singles',
     desc: 'High-fidelity custom portrait busts, professional occupation miniatures, gaming characters, and personalized single figures.',
-    image: '/prod_couple.png',
+    image: 'https://files.catbox.moe/zhjil3.png',
   },
   lamps: {
     title: 'Lithophane Lamps',
     desc: 'Exquisite 3D-printed photo lamps that project your favorite memories when lit up. Complete with built-in warm LED light bases.',
-    image: '/prod_lamp.png',
+    image: 'https://files.catbox.moe/ghoz6k.png',
   },
 };
 
@@ -39,7 +39,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   const meta = collectionMeta[collectionId] || {
     title: 'Products',
     desc: 'Explore our collection of custom 3D printed gifts.',
-    image: '/hero_deity.png',
+    image: 'https://files.catbox.moe/rix4zz.png',
   };
 
   const filteredProducts = products.filter((p) => p.collection_id === collectionId);
