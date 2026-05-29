@@ -16,6 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onAuthSuccess,
 }) => {
   const [tab, setTab] = useState<'signin' | 'register'>(initialTab);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,11 +45,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (tab === 'register') {
+        if (!fullName.trim()) {
+          setErrorMsg('Please enter your full name');
+          setLoading(false);
+          return;
+        }
         if (isPlaceholderClient) {
           // Mock SignUp Simulation
-          console.log('[Auth Mock] SignUp request with:', email);
+          console.log('[Auth Mock] SignUp request with:', email, fullName);
           setTimeout(() => {
-            setSuccessMsg('Perfect! A verification link has been sent to your email. Please check your inbox.');
+            const mockUser = {
+              id: 'mock-uuid-1234',
+              email: email,
+              user_metadata: {
+                full_name: fullName,
+              },
+            };
+            onAuthSuccess(mockUser);
+            setSuccessMsg('Registration successful! (Simulation mode)');
+            setTimeout(() => {
+              onClose();
+            }, 1200);
             setLoading(false);
           }, 1000);
           return;
@@ -60,6 +77,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           password,
           options: {
             emailRedirectTo: window.location.origin,
+            data: {
+              full_name: fullName,
+            }
           }
         });
 
@@ -79,7 +99,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             const mockUser = {
               id: 'mock-uuid-1234',
               email: email,
-              user_metadata: {},
+              user_metadata: {
+                full_name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
+              },
             };
             onAuthSuccess(mockUser);
             setSuccessMsg('Successfully signed in!');
@@ -173,6 +195,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         )}
 
         <form onSubmit={handleAuth} className="auth-form">
+          {tab === 'register' && (
+            <div className="form-group">
+              <label htmlFor="fullName">Full Name</label>
+              <div className="input-wrapper">
+                <Icons.User className="input-icon" size={16} />
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">

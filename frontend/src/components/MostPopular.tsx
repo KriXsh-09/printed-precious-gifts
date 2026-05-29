@@ -79,6 +79,22 @@ export const MostPopular: React.FC<MostPopularProps> = ({ onAddToCart, popularPr
             
             <div className="product-info">
               <div className="product-info-left">
+                <div className="product-rating" style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '6px' }}>
+                  {[...Array(5)].map((_, i) => (
+                    <Icons.Star
+                      key={i}
+                      size={13}
+                      fill={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "none"}
+                      stroke={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "var(--text-muted)"}
+                    />
+                  ))}
+                  <span className="rating-val" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-dark)', marginLeft: '2px' }}>
+                    {(product.rating || 5.0).toFixed(1)}
+                  </span>
+                  <span className="rating-count" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    ({product.reviews || 0})
+                  </span>
+                </div>
                 <h3 className="product-title">{product.title}</h3>
                 <p className="product-description">{product.description}</p>
               </div>

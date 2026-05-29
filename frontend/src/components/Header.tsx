@@ -94,6 +94,11 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
                 <div className="profile-dropdown-info">
                   <p className="profile-email-title">Signed in as</p>
+                  {currentUser.user_metadata?.full_name && (
+                    <p className="profile-name" style={{ fontWeight: 600, color: 'var(--text-dark)', fontSize: '1rem', marginBottom: '2px' }}>
+                      {currentUser.user_metadata.full_name}
+                    </p>
+                  )}
                   <p className="profile-email">{currentUser.email}</p>
                   <div className="divider"></div>
                   {isAdmin && (
@@ -174,9 +179,12 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="mobile-auth-section">
               {currentUser ? (
                 <div className="mobile-profile-info">
-                  <div className="user-details">
-                    <Icons.User size={20} />
-                    <span>{currentUser.email}</span>
+                  <div className="user-details" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dark)' }}>
+                      <Icons.User size={20} />
+                      <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>{currentUser.user_metadata?.full_name || 'Customer'}</span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: '#6b7280', paddingLeft: '28px' }}>{currentUser.email}</span>
                   </div>
                   <button className="mobile-action-btn signout-btn" onClick={() => { onSignOut(); closeAllMenus(); }}>
                     <Icons.LogOut size={16} />

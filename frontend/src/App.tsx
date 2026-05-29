@@ -15,6 +15,8 @@ import { CollectionView } from './components/CollectionView';
 import { CustomizeModal } from './components/CustomizeModal';
 import { MyOrders } from './components/MyOrders';
 import { Support } from './components/Support';
+import { Reviews } from './components/Reviews';
+import type { Review } from './components/Reviews';
 
 interface BackendData {
   logo: {
@@ -154,6 +156,42 @@ const defaultProducts: Product[] = [
   }
 ];
 
+const defaultReviews: Review[] = [
+  {
+    id: 'rev-1',
+    user_id: 'user-1',
+    user_name: 'Aarav Sharma',
+    product_id: 1,
+    product_title: 'Divine Ganesha Statue',
+    product_image: 'https://files.catbox.moe/hhyds5.png',
+    rating: 5,
+    comment: 'Absolutely gorgeous! The level of detail on Ganesha is stunning, and the antique bronze finish looks extremely premium on my office desk. Highly recommend!',
+    created_at: '2026-05-15T12:00:00Z',
+  },
+  {
+    id: 'rev-2',
+    user_id: 'user-2',
+    user_name: 'Priya Patel',
+    product_id: 2,
+    product_title: 'Personalized Couple Sculpture',
+    product_image: 'https://files.catbox.moe/zhjil3.png',
+    rating: 5,
+    comment: 'I ordered this for our 5th anniversary. It turned out beyond my expectations! The resemblance is amazing and the seller was very helpful with customization. Thank you!',
+    created_at: '2026-05-18T15:30:00Z',
+  },
+  {
+    id: 'rev-3',
+    user_id: 'user-3',
+    user_name: 'Karan Malhotra',
+    product_id: 3,
+    product_title: 'Lithophane Magic Lamp',
+    product_image: 'https://files.catbox.moe/ghoz6k.png',
+    rating: 4,
+    comment: 'Unique gift idea. The photos show up beautifully when the light is switched on. A bit smaller than expected, but the quality makes up for it.',
+    created_at: '2026-05-22T09:45:00Z',
+  }
+];
+
 function App() {
   const [data, setData] = useState<BackendData | null>({
     logo: {
@@ -180,6 +218,7 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<'signin' | 'register'>('signin');
@@ -338,6 +377,47 @@ function App() {
     fetchProducts();
   }, []);
 
+  // Seed / Load reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        if (isPlaceholderClient) {
+          throw new Error('Placeholder client: bypass remote read');
+        }
+        
+        const { data: dbReviews, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+
+        if (dbReviews && dbReviews.length > 0) {
+          setReviews(dbReviews);
+          localStorage.setItem('giftworld_reviews', JSON.stringify(dbReviews));
+        } else {
+          // Seed database with default reviews if empty
+          const { error: seedError } = await supabase.from('reviews').insert(defaultReviews);
+          if (!seedError) {
+            setReviews(defaultReviews);
+            localStorage.setItem('giftworld_reviews', JSON.stringify(defaultReviews));
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase reviews fetch bypassed or failed, using LocalStorage. Error:', err);
+        const local = localStorage.getItem('giftworld_reviews');
+        if (local) {
+          setReviews(JSON.parse(local));
+        } else {
+          setReviews(defaultReviews);
+          localStorage.setItem('giftworld_reviews', JSON.stringify(defaultReviews));
+        }
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
   // Supabase Auth state listener
   useEffect(() => {
     // Check active session
@@ -367,21 +447,26 @@ function App() {
 
   // Fetch backend details
   useEffect(() => {
-    fetch('http://localhost:5000/api/hero')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return res.json();
-      })
-      .then((jsonData: BackendData) => {
-        setData(jsonData);
-        setLoading(false);
-      })
-      .catch(() => {
-        console.log('Backend API optional fetch bypassed, using default client-side data.');
-        setLoading(false);
-      });
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      fetch('http://localhost:5000/api/hero')
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return res.json();
+          })
+          .then((jsonData: BackendData) => {
+            setData(jsonData);
+            setLoading(false);
+          })
+          .catch(() => {
+            console.log('Backend API optional fetch bypassed, using default client-side data.');
+            setLoading(false);
+          });
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   // Product CRUD Handlers
@@ -431,6 +516,26 @@ function App() {
       }
     } catch (err) {
       console.error('Supabase delete failed:', err);
+    }
+  };
+
+  const handleAddReview = async (newReview: Omit<Review, 'id' | 'created_at'>) => {
+    const freshReview: Review = {
+      ...newReview,
+      id: `rev-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+
+    const updated = [freshReview, ...reviews];
+    setReviews(updated);
+    localStorage.setItem('giftworld_reviews', JSON.stringify(updated));
+
+    try {
+      if (!isPlaceholderClient) {
+        await supabase.from('reviews').insert([newReview]);
+      }
+    } catch (err) {
+      console.error('Supabase insert review failed:', err);
     }
   };
 
@@ -599,6 +704,13 @@ function App() {
                 />
                 <WhyChooseUs />
                 <OurCollection />
+                <Reviews
+                  products={products}
+                  reviews={reviews}
+                  currentUser={user}
+                  onAddReview={handleAddReview}
+                  onOpenAuth={handleOpenAuth}
+                />
               </>
             )}
             
