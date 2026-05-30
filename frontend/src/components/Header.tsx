@@ -14,6 +14,7 @@ interface HeaderProps {
   currentUser: any;
   onSignOut: () => void;
   onOpenAuth: (tab: 'signin' | 'register') => void;
+  isAdminUser?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,11 +29,12 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onSignOut,
   onOpenAuth,
+  isAdminUser,
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
-  const isAdmin = currentUser && currentUser.email?.toLowerCase() === adminEmail.toLowerCase();
+  const isAdmin = isAdminUser !== undefined ? isAdminUser : (currentUser && currentUser.email?.toLowerCase() === adminEmail.toLowerCase());
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();

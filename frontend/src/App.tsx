@@ -214,8 +214,14 @@ function App() {
   });
   const [loading, setLoading] = useState(true);
   
+  // API base URL
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : (import.meta.env.VITE_API_BASE_URL || 'https://giftworld-backend.onrender.com');
+
   // Cart, Auth & Products States
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<'customer' | 'admin'>('customer');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -320,11 +326,48 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Dynamic role checker based on backend API
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user) {
+        setUserRole('customer');
+        return;
+      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          setUserRole('customer');
+          return;
+        }
+        const res = await fetch(`${API_BASE}/api/auth/role`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.role);
+        } else {
+          setUserRole('customer');
+        }
+      } catch (err) {
+        console.warn('Failed to fetch role from backend API:', err);
+        // Check env fallback locally
+        const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
+        const isAdmin = user && user.email?.toLowerCase() === adminEmail.toLowerCase();
+        setUserRole(isAdmin ? 'admin' : 'customer');
+      }
+    };
+
+    fetchUserRole();
+  }, [user]);
+
   // Route Guard for Admin Panel & My Orders
   useEffect(() => {
     if (currentView === 'admin') {
       const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
-      const isAdminUser = user && user.email?.toLowerCase() === adminEmail.toLowerCase();
+      const isAdminUser = user && (userRole === 'admin' || user.email?.toLowerCase() === adminEmail.toLowerCase());
       if (!isAdminUser) {
         window.location.hash = '';
         setCurrentView('home');
@@ -334,7 +377,7 @@ function App() {
       window.location.hash = '';
       setCurrentView('home');
     }
-  }, [currentView, user]);
+  }, [currentView, user, userRole]);
 
   // Seed / Load products
   useEffect(() => {
@@ -471,51 +514,111 @@ function App() {
 
   // Product CRUD Handlers
   const handleAddProduct = async (newProd: Omit<Product, 'id' | 'rating' | 'reviews'>) => {
-    const freshProduct: Product = {
-      ...newProd,
-      id: Date.now(), // Unique ID fallback
-      rating: 4.8,
-      reviews: 45,
-    };
-
-    const updated = [...products, freshProduct];
-    setProducts(updated);
-    localStorage.setItem('giftworld_products', JSON.stringify(updated));
-
     try {
-      if (!isPlaceholderClient) {
-        await supabase.from('products').insert([newProd]);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch(`${API_BASE}/api/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newProd)
+      });
+      if (!res.ok) throw new Error('Backend insertion failed');
+      
+      const savedProduct = await res.json();
+      const updated = [...products, savedProduct];
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
     } catch (err) {
-      console.error('Supabase insert failed:', err);
+      console.warn('Backend API add product failed, using client fallback. Error:', err);
+      const freshProduct: Product = {
+        ...newProd,
+        id: Date.now(), // Unique ID fallback
+        rating: 4.8,
+        reviews: 45,
+      };
+
+      const updated = [...products, freshProduct];
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
+
+      try {
+        if (!isPlaceholderClient) {
+          await supabase.from('products').insert([newProd]);
+        }
+      } catch (dbErr) {
+        console.error('Supabase fallback insert failed:', dbErr);
+      }
     }
   };
 
   const handleUpdateProduct = async (id: number, updatedFields: Partial<Product>) => {
-    const updated = products.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
-    setProducts(updated);
-    localStorage.setItem('giftworld_products', JSON.stringify(updated));
-
     try {
-      if (!isPlaceholderClient) {
-        await supabase.from('products').update(updatedFields).eq('id', id);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch(`${API_BASE}/api/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedFields)
+      });
+      if (!res.ok) throw new Error('Backend update failed');
+      
+      const updatedProduct = await res.json();
+      const updated = products.map((p) => (p.id === id ? { ...p, ...updatedProduct } : p));
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
     } catch (err) {
-      console.error('Supabase update failed:', err);
+      console.warn('Backend API update product failed, using client fallback. Error:', err);
+      const updated = products.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
+
+      try {
+        if (!isPlaceholderClient) {
+          await supabase.from('products').update(updatedFields).eq('id', id);
+        }
+      } catch (dbErr) {
+        console.error('Supabase fallback update failed:', dbErr);
+      }
     }
   };
 
   const handleDeleteProduct = async (id: number) => {
-    const updated = products.filter((p) => p.id !== id);
-    setProducts(updated);
-    localStorage.setItem('giftworld_products', JSON.stringify(updated));
-
     try {
-      if (!isPlaceholderClient) {
-        await supabase.from('products').delete().eq('id', id);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch(`${API_BASE}/api/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error('Backend deletion failed');
+      
+      const updated = products.filter((p) => p.id !== id);
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
     } catch (err) {
-      console.error('Supabase delete failed:', err);
+      console.warn('Backend API delete product failed, using client fallback. Error:', err);
+      const updated = products.filter((p) => p.id !== id);
+      setProducts(updated);
+      localStorage.setItem('giftworld_products', JSON.stringify(updated));
+
+      try {
+        if (!isPlaceholderClient) {
+          await supabase.from('products').delete().eq('id', id);
+        }
+      } catch (dbErr) {
+        console.error('Supabase fallback delete failed:', dbErr);
+      }
     }
   };
 
@@ -583,16 +686,6 @@ function App() {
     setIsCheckingOut(true);
 
     try {
-      if (isPlaceholderClient) {
-        console.log('[Checkout Mock] Placing orders for items:', cart);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setCart([]);
-        setIsCartOpen(false);
-        alert('Order placed successfully! You can track it in My Orders.');
-        window.location.hash = '#my-orders';
-        return;
-      }
-
       const orderPayloads = cart.map((item) => ({
         user_id: user.id,
         user_email: user.email || '',
@@ -609,17 +702,66 @@ function App() {
         status: 'pending',
       }));
 
-      const { error } = await supabase.from('orders').insert(orderPayloads);
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      if (error) throw error;
+      const res = await fetch(`${API_BASE}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderPayloads)
+      });
+
+      if (!res.ok) {
+        throw new Error('API checkout failed');
+      }
 
       setCart([]);
       setIsCartOpen(false);
       alert('Order placed successfully! You can track it in My Orders.');
       window.location.hash = '#my-orders';
     } catch (err: any) {
-      console.error('Error placing order:', err);
-      alert(`Failed to place order: ${err.message}`);
+      console.warn('Backend API checkout failed, using client fallback. Error:', err);
+      try {
+        if (isPlaceholderClient) {
+          console.log('[Checkout Mock] Placing orders for items:', cart);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          setCart([]);
+          setIsCartOpen(false);
+          alert('Order placed successfully! You can track it in My Orders.');
+          window.location.hash = '#my-orders';
+          return;
+        }
+
+        const orderPayloads = cart.map((item) => ({
+          user_id: user.id,
+          user_email: user.email || '',
+          customer_name: item.customerName || 'Customer',
+          mobile_number: item.mobileNumber || '',
+          address: item.address || '',
+          product_id: item.id,
+          product_title: item.title,
+          product_image: item.image,
+          selected_size: item.size || '4"',
+          custom_photo_url: item.customPhotoUrl || null,
+          price: item.price,
+          quantity: item.quantity,
+          status: 'pending',
+        }));
+
+        const { error } = await supabase.from('orders').insert(orderPayloads);
+        if (error) throw error;
+
+        setCart([]);
+        setIsCartOpen(false);
+        alert('Order placed successfully! You can track it in My Orders.');
+        window.location.hash = '#my-orders';
+      } catch (fallbackErr: any) {
+        console.error('Checkout failed completely:', fallbackErr);
+        alert(`Failed to place order: ${fallbackErr.message}`);
+      }
     } finally {
       setIsCheckingOut(false);
     }
@@ -669,6 +811,7 @@ function App() {
               currentUser={user}
               onSignOut={handleSignOut}
               onOpenAuth={handleOpenAuth}
+              isAdminUser={userRole === 'admin'}
             />
 
             {/* Dynamic View rendering */}

@@ -48,24 +48,35 @@ CREATE POLICY "Users can create own orders"
   ON orders FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- 6. Policy: Admin (by email) can view ALL orders
---    IMPORTANT: Replace the email below with your actual admin email if different
+-- 6. Policy: Admin can view ALL orders
 DROP POLICY IF EXISTS "Admin can view all orders" ON orders;
 CREATE POLICY "Admin can view all orders"
   ON orders FOR SELECT
   USING (
-    auth.jwt() ->> 'email' = 'giftworldonlineofficial@gmail.com'
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
+    )
   );
 
--- 7. Policy: Admin (by email) can update order status
+-- 7. Policy: Admin can update order status
 DROP POLICY IF EXISTS "Admin can update orders" ON orders;
 CREATE POLICY "Admin can update orders"
   ON orders FOR UPDATE
   USING (
-    auth.jwt() ->> 'email' = 'giftworldonlineofficial@gmail.com'
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
+    )
   )
   WITH CHECK (
-    auth.jwt() ->> 'email' = 'giftworldonlineofficial@gmail.com'
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
+    )
   );
 
 -- 8. Auto-update `updated_at` timestamp on row changes
