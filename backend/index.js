@@ -20,8 +20,58 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const hasServiceKey = supabaseServiceRoleKey && supabaseServiceRoleKey !== 'placeholder-service-role-key';
 const supabaseAdmin = hasServiceKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : supabase;
 
+const getSupabaseClient = (req) => {
+  if (isPlaceholder) return supabase;
+  
+  if (hasServiceKey) {
+    return supabaseAdmin;
+  }
+  
+  const authHeader = req?.headers?.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  
+  if (token) {
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    });
+  }
+  
+  return supabase;
+};
+
 // --- Helper Mock Store (for testing/development fallback) ---
 const mockOrders = [];
+
+// Helper to filter payload to only columns that exist in the database table
+const getFilteredPayload = async (table, payload) => {
+  try {
+    const { data } = await supabase.from(table).select().limit(1);
+    const validColumns = (data && data.length > 0) ? Object.keys(data[0]) : [];
+    if (validColumns.length === 0) {
+      // Predefined default columns if table is completely empty
+      const defaults = {
+        products: ['title', 'description', 'price', 'image', 'collection_id', 'is_popular', 'rating', 'reviews'],
+        orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status']
+      };
+      validColumns.push(...(defaults[table] || []));
+    }
+    
+    const filtered = {};
+    for (const key of Object.keys(payload)) {
+      if (validColumns.includes(key) && payload[key] !== undefined) {
+        filtered[key] = payload[key];
+      }
+    }
+    return filtered;
+  } catch (err) {
+    console.error(`Error filtering payload for ${table}:`, err);
+    return payload;
+  }
+};
 
 // --- MIDDLEWARES ---
 
@@ -131,7 +181,8 @@ app.get('/api/auth/role', authenticateUser, async (req, res) => {
     // Env admin match -> Automatically assure admin role is populated inDB
     if (userEmail.toLowerCase() === envAdminEmail.toLowerCase()) {
       if (!isPlaceholder) {
-        await supabaseAdmin.from('user_roles').upsert({ user_id: userId, role: 'admin' });
+        const client = getSupabaseClient(req);
+        await client.from('user_roles').upsert({ user_id: userId, role: 'admin' });
       }
       return res.json({ role: 'admin' });
     }
@@ -168,11 +219,12 @@ app.get('/api/orders', authenticateUser, async (req, res) => {
       return res.json(filtered);
     }
 
-    let query = supabaseAdmin.from('orders').select('*');
+    const client = getSupabaseClient(req);
+    let query = client.from('orders').select('*');
 
     if (!isAdmin) {
       // Query to ensure the customer only views their own orders
-      const { data: roleCheck } = await supabaseAdmin
+      const { data: roleCheck } = await client
         .from('user_roles')
         .select('role')
         .eq('user_id', req.user.id)
@@ -227,7 +279,8 @@ app.post('/api/orders', authenticateUser, async (req, res) => {
       return res.status(201).json(createdItems);
     }
 
-    const { data, error } = await supabaseAdmin.from('orders').insert(items).select();
+    const client = getSupabaseClient(req);
+    const { data, error } = await client.from('orders').insert(items).select();
     if (error) throw error;
     res.status(201).json(data);
   } catch (err) {
@@ -257,7 +310,8 @@ app.put('/api/orders/:id/status', authenticateUser, requireAdmin, async (req, re
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    const { data, error } = await supabaseAdmin
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('orders')
       .update({ status })
       .eq('id', id)
@@ -289,7 +343,10 @@ app.post('/api/products', authenticateUser, requireAdmin, async (req, res) => {
     }
 
     const payload = { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular };
-    const { data, error } = await supabaseAdmin.from('products').insert([payload]).select();
+    const filteredPayload = await getFilteredPayload('products', payload);
+    
+    const client = getSupabaseClient(req);
+    const { data, error } = await client.from('products').insert([filteredPayload]).select();
     if (error) throw error;
     res.status(201).json(data[0]);
   } catch (err) {
@@ -308,9 +365,13 @@ app.put('/api/products/:id', authenticateUser, requireAdmin, async (req, res) =>
       return res.json({ id: Number(id), title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular });
     }
 
-    const { data, error } = await supabaseAdmin
+    const payload = { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular };
+    const filteredPayload = await getFilteredPayload('products', payload);
+
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('products')
-      .update({ title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular })
+      .update(filteredPayload)
       .eq('id', Number(id))
       .select();
 
@@ -331,7 +392,8 @@ app.delete('/api/products/:id', authenticateUser, requireAdmin, async (req, res)
       return res.json({ message: 'Product deleted successfully (mock)' });
     }
 
-    const { error } = await supabaseAdmin.from('products').delete().eq('id', Number(id));
+    const client = getSupabaseClient(req);
+    const { error } = await client.from('products').delete().eq('id', Number(id));
     if (error) throw error;
     res.json({ message: 'Product deleted successfully' });
   } catch (err) {
