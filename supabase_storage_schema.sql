@@ -29,11 +29,7 @@ CREATE POLICY "Admins can upload product images"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'product-images' AND
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Policy C: Only Admins can update/delete product images
@@ -42,11 +38,7 @@ CREATE POLICY "Admins can manage product images"
   ON storage.objects FOR UPDATE
   USING (
     bucket_id = 'product-images' AND
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
+    public.is_admin()
   );
 
 
@@ -70,12 +62,8 @@ CREATE POLICY "Owners and admins can view customization images"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'user-customizations' AND (
-      auth.uid() = owner OR
-      EXISTS (
-        SELECT 1 FROM public.user_roles
-        WHERE user_roles.user_id = auth.uid()
-        AND user_roles.role = 'admin'
-      )
+      auth.uid()::text = owner OR
+      public.is_admin()
     )
   );
 
@@ -85,11 +73,7 @@ CREATE POLICY "Owners and admins can delete customization images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'user-customizations' AND (
-      auth.uid() = owner OR
-      EXISTS (
-        SELECT 1 FROM public.user_roles
-        WHERE user_roles.user_id = auth.uid()
-        AND user_roles.role = 'admin'
-      )
+      auth.uid()::text = owner OR
+      public.is_admin()
     )
   );

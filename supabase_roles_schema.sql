@@ -10,26 +10,43 @@ CREATE TABLE IF NOT EXISTS user_roles (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 2. Enable Row Level Security (RLS)
+-- 2. Create is_admin() helper function to bypass RLS recursion
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+DECLARE
+  admin_email TEXT := 'giftworldonlineofficial@gmail.com';
+BEGIN
+  -- First quick check: designated admin email in JWT
+  IF lower(coalesce(auth.jwt() ->> 'email', '')) = lower(admin_email) THEN
+    RETURN TRUE;
+  END IF;
+
+  -- Second check: check user_roles table (runs as security definer, bypassing RLS recursion)
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_roles.user_id = auth.uid()
+    AND user_roles.role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
+
+-- 3. Enable Row Level Security (RLS)
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
--- 3. Policy: Users can view their own role
+-- 4. Policy: Users can view their own role
 DROP POLICY IF EXISTS "Users can view own role" ON user_roles;
 CREATE POLICY "Users can view own role"
   ON user_roles FOR SELECT
   USING (auth.uid() = user_id);
 
--- 4. Policy: Admins can view all roles
+-- 5. Policy: Admins can view all roles
 DROP POLICY IF EXISTS "Admins can view all roles" ON user_roles;
 CREATE POLICY "Admins can view all roles"
   ON user_roles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
-  );
+  USING (public.is_admin());
 
 -- 5. Trigger to automatically assign the 'customer' role on sign up
 CREATE OR REPLACE FUNCTION public.handle_new_user_role()

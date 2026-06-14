@@ -21,7 +21,7 @@ interface CartDrawerProps {
   cartItems: CartItem[];
   onUpdateQuantity: (cartItemId: string, delta: number) => void;
   onRemoveItem: (cartItemId: string) => void;
-  onCheckout: () => Promise<void>;
+  onCheckout: (shippingDetails: { customerName: string; mobileNumber: string; address: string }) => Promise<void>;
   isCheckingOut: boolean;
 }
 
@@ -34,6 +34,43 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onCheckout,
   isCheckingOut,
 }) => {
+  const [shippingName, setShippingName] = React.useState('');
+  const [shippingMobile, setShippingMobile] = React.useState('');
+  const [shippingAddress, setShippingAddress] = React.useState('');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      // Find first item with customer details to pre-populate
+      const itemWithDetails = cartItems.find(item => item.customerName || item.mobileNumber || item.address);
+      if (itemWithDetails) {
+        setShippingName(prev => prev || itemWithDetails.customerName || '');
+        setShippingMobile(prev => prev || itemWithDetails.mobileNumber || '');
+        setShippingAddress(prev => prev || itemWithDetails.address || '');
+      }
+    }
+  }, [isOpen, cartItems]);
+
+  const handleCheckoutClick = () => {
+    if (!shippingName.trim()) {
+      alert('Please enter your full name for shipping.');
+      return;
+    }
+    if (!shippingMobile.trim() || shippingMobile.trim().length < 10) {
+      alert('Please enter a valid mobile number (at least 10 digits).');
+      return;
+    }
+    if (!shippingAddress.trim()) {
+      alert('Please enter your delivery address.');
+      return;
+    }
+
+    onCheckout({
+      customerName: shippingName.trim(),
+      mobileNumber: shippingMobile.trim(),
+      address: shippingAddress.trim()
+    });
+  };
+
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   if (!isOpen) return null;
@@ -140,6 +177,48 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </div>
                 </div>
               ))}
+              {/* Shipping Address Form */}
+              <div className="cart-shipping-form" style={{ marginTop: '24px', padding: '16px', backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-dark)' }}>
+                  <Icons.MapPin size={16} />
+                  <span>Delivery Address</span>
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="form-group" style={{ gap: '2px' }}>
+                    <label htmlFor="cart-ship-name" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-dark)' }}>Full Name *</label>
+                    <input
+                      id="cart-ship-name"
+                      type="text"
+                      placeholder="e.g. Rahul Sharma"
+                      value={shippingName}
+                      onChange={(e) => setShippingName(e.target.value)}
+                      style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', width: '100%', outline: 'none' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gap: '2px' }}>
+                    <label htmlFor="cart-ship-mobile" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-dark)' }}>Mobile Number *</label>
+                    <input
+                      id="cart-ship-mobile"
+                      type="tel"
+                      placeholder="e.g. 9876543210"
+                      value={shippingMobile}
+                      onChange={(e) => setShippingMobile(e.target.value)}
+                      style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', width: '100%', outline: 'none' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gap: '2px' }}>
+                    <label htmlFor="cart-ship-address" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-dark)' }}>Shipping Address *</label>
+                    <textarea
+                      id="cart-ship-address"
+                      rows={2}
+                      placeholder="Full shipping address with PIN code"
+                      value={shippingAddress}
+                      onChange={(e) => setShippingAddress(e.target.value)}
+                      style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.85rem', width: '100%', fontFamily: 'inherit', resize: 'vertical', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -156,7 +235,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </p>
             <button 
               className="cart-checkout-btn" 
-              onClick={onCheckout}
+              onClick={handleCheckoutClick}
               disabled={isCheckingOut}
             >
               {isCheckingOut ? (

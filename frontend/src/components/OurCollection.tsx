@@ -37,11 +37,11 @@ const collections: CollectionItem[] = [
   },
   {
     id: 4,
-    title: 'Lithophane Lamps',
+    title: 'Vault',
     count: '8 Items',
-    description: 'Exquisite 3D-printed cylindrical and panel photo lamps with built-in warm LEDs.',
+    description: 'Exquisite pre-designed 3D-printed models, exclusive home decor, and creative ready-made treasures.',
     image: 'https://files.catbox.moe/ghoz6k.png',
-    href: '#collections/lithophanes',
+    href: '#collections/vault',
   },
 ];
 

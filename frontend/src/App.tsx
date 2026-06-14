@@ -83,7 +83,7 @@ const defaultProducts: Product[] = [
     rating: 4.9,
     reviews: 210,
     image: 'https://files.catbox.moe/ghoz6k.png',
-    collection_id: 'lamps',
+    collection_id: 'vault',
     is_popular: true,
     tag: 'Trending'
   },
@@ -151,7 +151,7 @@ const defaultProducts: Product[] = [
     rating: 4.9,
     reviews: 67,
     image: 'https://files.catbox.moe/ghoz6k.png',
-    collection_id: 'lamps',
+    collection_id: 'vault',
     is_popular: false
   }
 ];
@@ -201,6 +201,7 @@ function App() {
     navigation: [
       { label: 'Most Popular', href: '#most-popular' },
       { label: 'Our Collection', href: '#collection' },
+      { label: 'Vault', href: '#collections/vault' },
       { label: 'Support', href: '#support' }
     ],
     hero: {
@@ -244,6 +245,19 @@ function App() {
       setIsAuthOpen(true);
       return;
     }
+    
+    if (product.collection_id === 'vault' || product.collection_id === 'readymade' || product.collection_id === 'lamps') {
+      handleAddToCart({
+        cartItemId: `${product.id}-vault-${Date.now()}`,
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        size: 'Standard',
+      });
+      return;
+    }
+    
     setCustomizeProduct(product);
   };
 
@@ -679,7 +693,7 @@ function App() {
     setCart((prevCart) => prevCart.filter((item) => item.cartItemId !== cartItemId));
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (shippingDetails?: { customerName: string; mobileNumber: string; address: string }) => {
     if (!user) {
       alert('Please login to place an order.');
       return;
@@ -696,13 +710,13 @@ function App() {
       const orderPayloads = cart.map((item) => ({
         user_id: user.id,
         user_email: user.email || '',
-        customer_name: item.customerName || 'Customer',
-        mobile_number: item.mobileNumber || '',
-        address: item.address || '',
+        customer_name: item.customerName || shippingDetails?.customerName || 'Customer',
+        mobile_number: item.mobileNumber || shippingDetails?.mobileNumber || '',
+        address: item.address || shippingDetails?.address || '',
         product_id: item.id,
         product_title: item.title,
         product_image: item.image,
-        selected_size: item.size || '4"',
+        selected_size: item.size || 'Standard',
         custom_photo_url: item.customPhotoUrl || null,
         price: item.price,
         quantity: item.quantity,
@@ -745,13 +759,13 @@ function App() {
         const orderPayloads = cart.map((item) => ({
           user_id: user.id,
           user_email: user.email || '',
-          customer_name: item.customerName || 'Customer',
-          mobile_number: item.mobileNumber || '',
-          address: item.address || '',
+          customer_name: item.customerName || shippingDetails?.customerName || 'Customer',
+          mobile_number: item.mobileNumber || shippingDetails?.mobileNumber || '',
+          address: item.address || shippingDetails?.address || '',
           product_id: item.id,
           product_title: item.title,
           product_image: item.image,
-          selected_size: item.size || '4"',
+          selected_size: item.size || 'Standard',
           custom_photo_url: item.customPhotoUrl || null,
           price: item.price,
           quantity: item.quantity,
@@ -880,7 +894,7 @@ function App() {
                     <a href="#collections/divine">Divine Statues</a>
                     <a href="#collections/couples">Custom Couples</a>
                     <a href="#collections/singles">Custom Singles</a>
-                    <a href="#collections/lamps">Lithophane Lamps</a>
+                    <a href="#collections/vault">Vault</a>
                   </div>
                   <div className="footer-links-col">
                     <h4>Support</h4>
@@ -935,11 +949,23 @@ function App() {
               initialTab={authTab}
               onAuthSuccess={(userData) => {
                 setUser(userData);
-                // Auto-open customize modal if there was a pending product
+                // Auto-open customize modal or add direct if readymade
                 if (pendingCustomizeProduct) {
+                  const prod = pendingCustomizeProduct;
+                  setPendingCustomizeProduct(null);
                   setTimeout(() => {
-                    setCustomizeProduct(pendingCustomizeProduct);
-                    setPendingCustomizeProduct(null);
+                    if (prod.collection_id === 'vault' || prod.collection_id === 'readymade' || prod.collection_id === 'lamps') {
+                      handleAddToCart({
+                        cartItemId: `${prod.id}-vault-${Date.now()}`,
+                        id: prod.id,
+                        title: prod.title,
+                        price: prod.price,
+                        image: prod.image,
+                        size: 'Standard',
+                      });
+                    } else {
+                      setCustomizeProduct(prod);
+                    }
                   }, 500);
                 }
               }}

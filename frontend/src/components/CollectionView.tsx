@@ -24,9 +24,19 @@ const collectionMeta: Record<string, { title: string; desc: string; image: strin
     desc: 'High-fidelity custom portrait busts, professional occupation miniatures, gaming characters, and personalized single figures.',
     image: 'https://files.catbox.moe/zhjil3.png',
   },
+  vault: {
+    title: 'Vault',
+    desc: 'Explore our curated series of pre-designed 3D-printed gifts, artistic home decor, and spiritual keepsakes that do not require photo customization. Quick shipping guaranteed!',
+    image: 'https://files.catbox.moe/ghoz6k.png',
+  },
+  readymade: {
+    title: 'Vault',
+    desc: 'Explore our curated series of pre-designed 3D-printed gifts, artistic home decor, and spiritual keepsakes that do not require photo customization. Quick shipping guaranteed!',
+    image: 'https://files.catbox.moe/ghoz6k.png',
+  },
   lamps: {
-    title: 'Lithophane Lamps',
-    desc: 'Exquisite 3D-printed photo lamps that project your favorite memories when lit up. Complete with built-in warm LED light bases.',
+    title: 'Vault',
+    desc: 'Explore our curated series of pre-designed 3D-printed gifts, artistic home decor, and spiritual keepsakes that do not require photo customization. Quick shipping guaranteed!',
     image: 'https://files.catbox.moe/ghoz6k.png',
   },
 };
@@ -42,7 +52,13 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     image: 'https://files.catbox.moe/rix4zz.png',
   };
 
-  const filteredProducts = products.filter((p) => p.collection_id === collectionId);
+  const isReadymade = collectionId === 'vault' || collectionId === 'readymade' || collectionId === 'lamps';
+
+  const filteredProducts = products.filter((p) => 
+    p.collection_id === collectionId || 
+    ((collectionId === 'vault' || collectionId === 'readymade' || collectionId === 'lamps') && 
+     (p.collection_id === 'vault' || p.collection_id === 'readymade' || p.collection_id === 'lamps'))
+  );
 
   return (
     <div className="collection-view-container">
@@ -115,8 +131,8 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
                       className="customize-btn"
                       onClick={() => onAddToCart(product)}
                     >
-                      <span>Customize</span>
-                      <Icons.ArrowRight size={14} />
+                      <span>{isReadymade ? 'Add to Cart' : 'Customize'}</span>
+                      {isReadymade ? <Icons.ShoppingBag size={14} /> : <Icons.ArrowRight size={14} />}
                     </button>
                   </div>
                 </div>

@@ -33,7 +33,7 @@ const collectionsList = [
   { id: 'divine', label: 'Divine Statues' },
   { id: 'couples', label: 'Customized Couples' },
   { id: 'singles', label: 'Customized Singles' },
-  { id: 'lamps', label: 'Lithophane Lamps' },
+  { id: 'vault', label: 'Vault' },
 ];
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -287,7 +287,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const divineCount = products.filter((p) => p.collection_id === 'divine').length;
   const couplesCount = products.filter((p) => p.collection_id === 'couples').length;
   const singlesCount = products.filter((p) => p.collection_id === 'singles').length;
-  const lampsCount = products.filter((p) => p.collection_id === 'lamps').length;
+  const lampsCount = products.filter((p) => p.collection_id === 'lamps' || p.collection_id === 'readymade' || p.collection_id === 'vault').length;
   const pendingOrders = orders.filter((o) => o.status === 'pending').length;
   const deliveredOrders = orders.filter((o) => o.status === 'delivered').length;
 
@@ -377,9 +377,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <span className="mini-val">{singlesCount}</span>
                   <span className="mini-label">Singles</span>
                 </div>
-                <div className="mini-stat">
+                 <div className="mini-stat">
                   <span className="mini-val">{lampsCount}</span>
-                  <span className="mini-label">Lamps</span>
+                  <span className="mini-label">Vault</span>
                 </div>
               </div>
             </div>

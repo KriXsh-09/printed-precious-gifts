@@ -52,32 +52,14 @@ CREATE POLICY "Users can create own orders"
 DROP POLICY IF EXISTS "Admin can view all orders" ON orders;
 CREATE POLICY "Admin can view all orders"
   ON orders FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
-  );
+  USING (public.is_admin());
 
 -- 7. Policy: Admin can update order status
 DROP POLICY IF EXISTS "Admin can update orders" ON orders;
 CREATE POLICY "Admin can update orders"
   ON orders FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role = 'admin'
-    )
-  );
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
 -- 8. Auto-update `updated_at` timestamp on row changes
 CREATE OR REPLACE FUNCTION update_orders_updated_at()

@@ -22,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   navItems = [
     { label: 'Most Popular', href: '#most-popular' },
     { label: 'Our Collection', href: '#collection' },
+    { label: 'Vault', href: '#collections/vault' },
     { label: 'Support', href: '#support' }
   ],
   cartCount,

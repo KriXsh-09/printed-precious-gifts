@@ -158,6 +158,7 @@ app.get('/api/hero', (req, res) => {
     navigation: [
       { label: 'Most Popular', href: '#most-popular' },
       { label: 'Our Collection', href: '#collection' },
+      { label: 'Vault', href: '#collections/vault' },
       { label: 'Support', href: '#support' }
     ],
     hero: {
