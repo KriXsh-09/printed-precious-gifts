@@ -174,6 +174,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
+      // Ensure the admin role is seeded in user_roles before uploading.
+      // The storage policy checks user_roles for admin access.
+      await supabase.rpc('ensure_admin_role');
+
       const { error } = await supabase.storage
         .from('product-images')
         .upload(filePath, file, {

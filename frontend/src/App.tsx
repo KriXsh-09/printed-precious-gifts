@@ -348,6 +348,13 @@ function App() {
         if (res.ok) {
           const data = await res.json();
           setUserRole(data.role);
+          // If admin, ensure the user_roles row exists in Supabase DB
+          // This is required for storage upload policies to work
+          if (data.role === 'admin') {
+            supabase.rpc('ensure_admin_role').then(({ error }) => {
+              if (error) console.warn('ensure_admin_role RPC failed (run supabase_ensure_admin_fn.sql):', error.message);
+            });
+          }
         } else {
           setUserRole('customer');
         }
