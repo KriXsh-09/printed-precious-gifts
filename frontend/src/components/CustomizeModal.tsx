@@ -23,6 +23,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
 
   // Customer detail fields
   const [customerName, setCustomerName] = useState('');
@@ -43,10 +44,18 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
       setMobileNumber('');
       setAddress('');
       setOrderError(null);
+      setSelectedImageIndex(0);
     }
   }, [isOpen, product]);
 
   if (!isOpen || !product) return null;
+
+  // Build product images array (with fallback to single image)
+  const productImages = (product.images && product.images.length > 0)
+    ? product.images
+    : [product.image];
+
+  const activeDisplayImage = productImages[selectedImageIndex] || productImages[0] || product.image;
 
   // Pricing based on selected size
   const getPriceForSize = (): number => {
@@ -62,6 +71,16 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
 
     setIsUploading(true);
     setUploadError(null);
+
+    // Fallback helper to convert file to data URL
+    const readAsDataUrl = (fileToRead: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(fileToRead);
+      });
+    };
 
     try {
       const fileExt = file.name.split('.').pop();
@@ -85,12 +104,18 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
 
       setCustomPhotoUrl(publicUrl);
     } catch (err: any) {
-      console.error('Error uploading photo:', err);
-      setUploadError(
-        err.message || 'Failed to upload photo. Make sure the storage bucket "user-customizations" exists and is public.'
-      );
+      console.warn('Supabase storage upload failed or bypassed, using local file reader fallback. Error:', err);
+      try {
+        const localDataUrl = await readAsDataUrl(file);
+        setCustomPhotoUrl(localDataUrl);
+      } catch (fallbackErr: any) {
+        console.error('File reader fallback failed:', fallbackErr);
+        setUploadError('Failed to process image file. Please try selecting a different photo.');
+      }
     } finally {
       setIsUploading(false);
+      // Reset input element value so the same file can be re-uploaded if desired
+      e.target.value = '';
     }
   };
 
@@ -119,7 +144,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
       id: product.id,
       title: product.title,
       price: currentPrice,
-      image: product.image,
+      image: activeDisplayImage,
       size: selectedSize,
       customPhotoUrl: customPhotoUrl || undefined,
       customerName: customerName.trim(),
@@ -139,10 +164,29 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
           <Icons.X size={18} />
         </button>
 
-        {/* Modal Header details */}
-        <div className="cust-modal-header">
-          <img src={product.image} alt={product.title} className="cust-product-thumb" />
-          <div>
+        {/* Modal Header details with Interactive Image Gallery */}
+        <div className="cust-gallery-container">
+          <div className="cust-featured-image-wrapper">
+            <img src={activeDisplayImage} alt={product.title} className="cust-featured-image" />
+          </div>
+
+          {/* Thumbnail strip if multiple images */}
+          {productImages.length > 1 && (
+            <div className="cust-thumbnails-strip">
+              {productImages.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`cust-thumb-btn ${idx === selectedImageIndex ? 'active' : ''}`}
+                  onClick={() => setSelectedImageIndex(idx)}
+                >
+                  <img src={imgUrl} alt={`${product.title} thumbnail ${idx + 1}`} className="cust-thumb-img" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="cust-product-meta">
             <h3 className="admin-modal-title">{product.title}</h3>
             <p className="cust-product-desc">{product.description}</p>
           </div>

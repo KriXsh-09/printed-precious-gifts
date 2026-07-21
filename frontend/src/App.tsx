@@ -45,6 +45,7 @@ export interface Product {
   rating: number;
   reviews: number;
   image: string;
+  images?: string[];
   collection_id: string;
   is_popular: boolean;
   tag?: string;
@@ -509,6 +510,19 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Load Razorpay checkout script dynamically
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
   // Fetch backend details
   useEffect(() => {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -704,6 +718,11 @@ function App() {
       return;
     }
 
+    if (!(window as any).Razorpay) {
+      alert('Razorpay payment gateway script is not loaded yet. Please check your internet connection or try again.');
+      return;
+    }
+
     setIsCheckingOut(true);
 
     try {
@@ -726,7 +745,8 @@ function App() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const res = await fetch(`${API_BASE}/api/orders`, {
+      // Initiate order on the backend to create Razorpay Order
+      const res = await fetch(`${API_BASE}/api/orders/initiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -736,13 +756,71 @@ function App() {
       });
 
       if (!res.ok) {
-        throw new Error('API checkout failed');
+        throw new Error('API order initiation failed');
       }
 
-      setCart([]);
-      setIsCartOpen(false);
-      alert('Order placed successfully! You can track it in My Orders.');
-      window.location.hash = '#my-orders';
+      const orderData = await res.json();
+
+      // Open Razorpay Checkout Modal
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder_key',
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Giftworld',
+        description: 'Payment for your 3D printed gifts',
+        order_id: orderData.razorpay_order_id,
+        handler: async function (response: any) {
+          setIsCheckingOut(true);
+          try {
+            // Verify payment on backend
+            const verifyRes = await fetch(`${API_BASE}/api/orders/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            if (!verifyRes.ok) {
+              throw new Error('Payment verification failed');
+            }
+
+            setCart([]);
+            setIsCartOpen(false);
+            alert('Payment successful and order placed!');
+            window.location.hash = '#my-orders';
+          } catch (verifyErr) {
+            console.error('Error during signature verification:', verifyErr);
+            alert('Payment was made, but server verification failed. Your order status will be updated shortly via webhook.');
+            setCart([]);
+            setIsCartOpen(false);
+            window.location.hash = '#my-orders';
+          } finally {
+            setIsCheckingOut(false);
+          }
+        },
+        prefill: {
+          name: shippingDetails?.customerName || user.user_metadata?.full_name || 'Customer',
+          contact: shippingDetails?.mobileNumber || '',
+          email: user.email || ''
+        },
+        theme: {
+          color: '#4f46e5'
+        },
+        modal: {
+          ondismiss: function () {
+            setIsCheckingOut(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err: any) {
       console.warn('Backend API checkout failed, using client fallback. Error:', err);
       try {
@@ -751,11 +829,12 @@ function App() {
           await new Promise((resolve) => setTimeout(resolve, 1500));
           setCart([]);
           setIsCartOpen(false);
-          alert('Order placed successfully! You can track it in My Orders.');
+          alert('Order placed successfully (Mock checkout)! You can track it in My Orders.');
           window.location.hash = '#my-orders';
           return;
         }
 
+        // Standard direct database insert fallback (without online payment)
         const orderPayloads = cart.map((item) => ({
           user_id: user.id,
           user_email: user.email || '',
@@ -770,6 +849,7 @@ function App() {
           price: item.price,
           quantity: item.quantity,
           status: 'pending',
+          payment_status: 'paid', // Direct supabase inserts bypass payment verification
         }));
 
         const { error } = await supabase.from('orders').insert(orderPayloads);
@@ -777,14 +857,14 @@ function App() {
 
         setCart([]);
         setIsCartOpen(false);
-        alert('Order placed successfully! You can track it in My Orders.');
+        alert('Order placed successfully! (Offline fallback mode)');
         window.location.hash = '#my-orders';
       } catch (fallbackErr: any) {
         console.error('Checkout failed completely:', fallbackErr);
         alert(`Failed to place order: ${fallbackErr.message}`);
+      } finally {
+        setIsCheckingOut(false);
       }
-    } finally {
-      setIsCheckingOut(false);
     }
   };
 

@@ -46,13 +46,12 @@ CREATE POLICY "Admins can manage product images"
 -- 3. Policies for 'user-customizations' Bucket
 -- ============================================
 
--- Policy A: Anyone authenticated can upload customization reference photos
+-- Policy A: Anyone can upload customization reference photos (guest customers)
 DROP POLICY IF EXISTS "Users can upload customization images" ON storage.objects;
 CREATE POLICY "Users can upload customization images"
   ON storage.objects FOR INSERT
   WITH CHECK (
-    bucket_id = 'user-customizations' AND
-    auth.role() = 'authenticated'
+    bucket_id = 'user-customizations'
   );
 
 -- Policy B: Only the owner (uploader) or admins can view reference photos
@@ -62,7 +61,7 @@ CREATE POLICY "Owners and admins can view customization images"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'user-customizations' AND (
-      auth.uid()::text = owner OR
+      auth.uid() = owner OR
       public.is_admin()
     )
   );
@@ -73,7 +72,7 @@ CREATE POLICY "Owners and admins can delete customization images"
   ON storage.objects FOR DELETE
   USING (
     bucket_id = 'user-customizations' AND (
-      auth.uid()::text = owner OR
+      auth.uid() = owner OR
       public.is_admin()
     )
   );

@@ -4020,4 +4020,219 @@ html.lenis body {
   opacity: 0.85;
 }
 
+/* =================================== */
+/* MULTI-IMAGE GALLERY & UPLOAD STYLES */
+/* =================================== */
+
+/* Admin Panel Multi-Image Upload Grid */
+.admin-images-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.admin-image-slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px dashed rgba(0, 0, 0, 0.12);
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.admin-image-slot.filled {
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.admin-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-image-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  z-index: 2;
+}
+
+.admin-image-remove-btn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+.admin-image-primary-tag {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: var(--accent-gold, #c8a255);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.admin-image-slot.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-image-add-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.admin-image-slot.empty:hover {
+  border-color: var(--accent-gold, #c8a255);
+  background: rgba(200, 162, 85, 0.05);
+}
+
+.admin-image-slot.empty:hover .admin-image-add-label {
+  color: var(--accent-gold, #c8a255);
+}
+
+.admin-prod-img-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--accent-gold, #c8a255);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Customize Modal Gallery Layout */
+.cust-gallery-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cust-featured-image-wrapper {
+  width: 100%;
+  height: 240px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f9fafb;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cust-featured-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.cust-thumbnails-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cust-thumb-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #f3f4f6;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.cust-thumb-btn.active {
+  border-color: var(--accent-gold, #c8a255);
+  box-shadow: 0 0 0 3px rgba(200, 162, 85, 0.18);
+  transform: scale(1.04);
+}
+
+.cust-thumb-btn:hover:not(.active) {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.cust-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cust-product-meta {
+  margin-top: 4px;
+}
+
+/* Product Card Gallery Dot Indicators */
+.product-dots-indicator {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+.dot-pill {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.dot-pill.active {
+  width: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .admin-images-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cust-featured-image-wrapper {
+    height: 180px;
+  }
+}
+
+
 

@@ -52,7 +52,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [price4in, setPrice4in] = useState('');
   const [price6in, setPrice6in] = useState('');
   const [price8in, setPrice8in] = useState('');
-  const [image, setImage] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [collectionId, setCollectionId] = useState('divine');
   const [isPopular, setIsPopular] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -89,7 +89,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const { data, error } = await supabase
         .from('orders')
         .select('*')
+        .eq('payment_status', 'paid')
         .order('created_at', { ascending: false });
+
 
       if (error) throw error;
 
@@ -166,6 +168,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (images.length >= 4) {
+      setUploadError('Maximum 4 images allowed per product.');
+      return;
+    }
+
     setIsUploading(true);
     setUploadError(null);
 
@@ -193,13 +200,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         .from('product-images')
         .getPublicUrl(filePath);
 
-      setImage(publicUrl);
+      setImages(prev => [...prev, publicUrl]);
     } catch (err: any) {
       console.error('Error uploading image:', err);
       setUploadError(err.message || 'Failed to upload image. Make sure the storage bucket "product-images" is created and public.');
     } finally {
       setIsUploading(false);
+      // Reset the file input so the same file can be re-selected
+      e.target.value = '';
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const openAddForm = () => {
@@ -209,7 +222,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setPrice4in('');
     setPrice6in('');
     setPrice8in('');
-    setImage('https://files.catbox.moe/rix4zz.png'); // default fallback path
+    setImages(['https://files.catbox.moe/rix4zz.png']); // default fallback
     setCollectionId('divine');
     setIsPopular(false);
     setErrorMsg(null);
@@ -225,7 +238,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setPrice4in(product.price_4in?.toString() || product.price.toString());
     setPrice6in(product.price_6in?.toString() || (product.price * 1.5).toString());
     setPrice8in(product.price_8in?.toString() || (product.price * 2).toString());
-    setImage(product.image);
+    // Populate images from product.images array, or fall back to single image
+    const productImages = (product.images && product.images.length > 0) ? product.images : [product.image];
+    setImages(productImages);
     setCollectionId(product.collection_id);
     setIsPopular(product.is_popular);
     setErrorMsg(null);
@@ -249,8 +264,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       return;
     }
 
-    if (!title.trim() || !image.trim()) {
-      setErrorMsg('Title and Image URL are required fields.');
+    if (!title.trim() || images.length === 0) {
+      setErrorMsg('Title and at least one image are required.');
       return;
     }
 
@@ -261,7 +276,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       price_4in: parsedPrice4in,
       price_6in: parsedPrice6in,
       price_8in: parsedPrice8in,
-      image,
+      image: images[0], // primary thumbnail for backward compatibility
+      images, // full images array
       collection_id: collectionId,
       is_popular: isPopular,
     };
@@ -407,14 +423,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 ) : (
                   products.map((product) => {
                     const collectionName = collectionsList.find((c) => c.id === product.collection_id)?.label || 'None';
+                    const thumbImg = (product.images && product.images.length > 0) ? product.images[0] : product.image;
                     return (
                       <tr key={product.id}>
                         <td>
                           <div className="admin-prod-cell">
-                            <img src={product.image} alt={product.title} className="admin-prod-thumb" />
+                            <img src={thumbImg} alt={product.title} className="admin-prod-thumb" />
                             <div>
                               <div className="admin-prod-title">{product.title}</div>
                               <div className="admin-prod-desc">{product.description || 'No description provided.'}</div>
+                              {product.images && product.images.length > 1 && (
+                                <div className="admin-prod-img-count">
+                                  <Icons.Images size={12} />
+                                  <span>{product.images.length} images</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -707,23 +730,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
 
               <div className="form-group">
-                <label>Product Image *</label>
+                <label>Product Images * <span style={{ fontSize: '0.78rem', color: '#9ca3af', fontWeight: 400 }}>(up to 4)</span></label>
                 
-                <div className="image-upload-wrapper">
-                  <div className="file-input-container">
-                    <label htmlFor="file-upload" className="file-upload-label">
-                      <Icons.Upload size={18} />
-                      <span>Choose from device</span>
-                    </label>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={isUploading}
-                      style={{ display: 'none' }}
-                    />
-                  </div>
+                {/* Image Grid */}
+                <div className="admin-images-grid">
+                  {images.map((imgUrl, index) => (
+                    <div key={index} className="admin-image-slot filled">
+                      <img src={imgUrl} alt={`Product ${index + 1}`} className="admin-image-preview" />
+                      <button
+                        type="button"
+                        className="admin-image-remove-btn"
+                        onClick={() => handleRemoveImage(index)}
+                        aria-label={`Remove image ${index + 1}`}
+                      >
+                        <Icons.X size={14} />
+                      </button>
+                      {index === 0 && <span className="admin-image-primary-tag">Primary</span>}
+                    </div>
+                  ))}
+
+                  {/* Add image slot (only show if < 4 images) */}
+                  {images.length < 4 && (
+                    <div className="admin-image-slot empty">
+                      <label htmlFor="file-upload" className="admin-image-add-label">
+                        <Icons.Plus size={22} />
+                        <span>Add Photo</span>
+                      </label>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                        style={{ display: 'none' }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {isUploading && (
@@ -737,13 +779,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div className="upload-status error">
                     <Icons.AlertCircle size={16} />
                     <span>{uploadError}</span>
-                  </div>
-                )}
-
-                {image && (
-                  <div className="image-preview-box">
-                    <p className="preview-label">Image Preview:</p>
-                    <img src={image} alt="Preview" className="uploaded-preview-img" />
                   </div>
                 )}
               </div>

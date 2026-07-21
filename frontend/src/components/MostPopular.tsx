@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
 import type { Product } from '../App';
 
@@ -59,6 +59,24 @@ interface MostPopularProps {
 }
 
 export const MostPopular: React.FC<MostPopularProps> = ({ onAddToCart, popularProducts = defaultPopularProducts }) => {
+  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<number, number>>({});
+
+  const handleMouseEnter = (productId: number, imageCount: number) => {
+    if (imageCount > 1) {
+      setActiveImageIndexes(prev => ({
+        ...prev,
+        [productId]: ((prev[productId] || 0) + 1) % imageCount
+      }));
+    }
+  };
+
+  const handleMouseLeave = (productId: number) => {
+    setActiveImageIndexes(prev => ({
+      ...prev,
+      [productId]: 0
+    }));
+  };
+
   return (
     <section id="most-popular" className="popular-section">
       <div className="section-header">
@@ -70,48 +88,79 @@ export const MostPopular: React.FC<MostPopularProps> = ({ onAddToCart, popularPr
       </div>
 
       <div className="products-grid">
-        {popularProducts.map((product) => (
-          <div key={product.id} className="product-card">
-            <div className="product-image-wrapper">
-              <img src={product.image} alt={product.title} className="product-image" />
-              {product.tag && <span className="product-badge">{product.tag}</span>}
-            </div>
-            
-            <div className="product-info">
-              <div className="product-info-left">
-                <div className="product-rating" style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '6px' }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Icons.Star
-                      key={i}
-                      size={13}
-                      fill={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "none"}
-                      stroke={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "var(--text-muted)"}
-                    />
-                  ))}
-                  <span className="rating-val" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-dark)', marginLeft: '2px' }}>
-                    {(product.rating || 5.0).toFixed(1)}
-                  </span>
-                  <span className="rating-count" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    ({product.reviews || 0})
-                  </span>
-                </div>
-                <h3 className="product-title">{product.title}</h3>
-                <p className="product-description">{product.description}</p>
+        {popularProducts.map((product) => {
+          const productImages = (product.images && product.images.length > 0)
+            ? product.images
+            : [product.image];
+          const activeIdx = activeImageIndexes[product.id] || 0;
+          const currentImg = productImages[activeIdx] || product.image;
+
+          const isReadymade = product.collection_id === 'vault' || product.collection_id === 'readymade' || product.collection_id === 'lamps';
+
+          return (
+            <div
+              key={product.id}
+              className="product-card"
+              onMouseEnter={() => handleMouseEnter(product.id, productImages.length)}
+              onMouseLeave={() => handleMouseLeave(product.id)}
+            >
+              <div className="product-image-wrapper">
+                <img src={currentImg} alt={product.title} className="product-image" />
+                {product.tag && <span className="product-badge">{product.tag}</span>}
+                
+                {/* Image Gallery Dot Indicators */}
+                {productImages.length > 1 && (
+                  <div className="product-dots-indicator">
+                    {productImages.map((_, dotIdx) => (
+                      <span
+                        key={dotIdx}
+                        className={`dot-pill ${dotIdx === activeIdx ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveImageIndexes(prev => ({ ...prev, [product.id]: dotIdx }));
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               
-              <div className="product-info-right">
-                <span className="product-price">₹{product.price.toFixed(2)}</span>
-                <button 
-                  className="customize-btn"
-                  onClick={() => onAddToCart(product)}
-                >
-                  <span>Customize</span>
-                  <Icons.ArrowRight size={14} />
-                </button>
+              <div className="product-info">
+                <div className="product-info-left">
+                  <div className="product-rating" style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '6px' }}>
+                    {[...Array(5)].map((_, i) => (
+                      <Icons.Star
+                        key={i}
+                        size={13}
+                        fill={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "none"}
+                        stroke={i < Math.round(product.rating || 5) ? "var(--accent-gold)" : "var(--text-muted)"}
+                      />
+                    ))}
+                    <span className="rating-val" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-dark)', marginLeft: '2px' }}>
+                      {(product.rating || 5.0).toFixed(1)}
+                    </span>
+                    <span className="rating-count" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      ({product.reviews || 0})
+                    </span>
+                  </div>
+                  <h3 className="product-title">{product.title}</h3>
+                  <p className="product-description">{product.description}</p>
+                </div>
+                
+                <div className="product-info-right">
+                  <span className="product-price">₹{product.price.toFixed(2)}</span>
+                  <button 
+                    className="customize-btn"
+                    onClick={() => onAddToCart(product)}
+                  >
+                    <span>{isReadymade ? 'Buy Now' : 'Customize'}</span>
+                    {isReadymade ? <Icons.ShoppingCart size={14} /> : <Icons.ArrowRight size={14} />}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

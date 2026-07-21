@@ -2,12 +2,19 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+
 
 // Initialize Supabase Clients
 const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder-project-id.supabase.co';
@@ -19,6 +26,13 @@ const isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey.inc
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const hasServiceKey = supabaseServiceRoleKey && supabaseServiceRoleKey !== 'placeholder-service-role-key';
 const supabaseAdmin = hasServiceKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : supabase;
+
+// Initialize Razorpay Client
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'placeholder_key_id',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder_key_secret',
+});
+
 
 const getSupabaseClient = (req) => {
   if (isPlaceholder) return supabase;
@@ -49,16 +63,14 @@ const mockOrders = [];
 // Helper to filter payload to only columns that exist in the database table
 const getFilteredPayload = async (table, payload) => {
   try {
+    const defaults = {
+      products: ['title', 'description', 'price', 'price_4in', 'price_6in', 'price_8in', 'image', 'images', 'collection_id', 'is_popular', 'rating', 'reviews'],
+      orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status']
+    };
+    
     const { data } = await supabase.from(table).select().limit(1);
-    const validColumns = (data && data.length > 0) ? Object.keys(data[0]) : [];
-    if (validColumns.length === 0) {
-      // Predefined default columns if table is completely empty
-      const defaults = {
-        products: ['title', 'description', 'price', 'image', 'collection_id', 'is_popular', 'rating', 'reviews'],
-        orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status']
-      };
-      validColumns.push(...(defaults[table] || []));
-    }
+    const dbColumns = (data && data.length > 0) ? Object.keys(data[0]) : [];
+    const validColumns = Array.from(new Set([...dbColumns, ...(defaults[table] || [])]));
     
     const filtered = {};
     for (const key of Object.keys(payload)) {
@@ -216,12 +228,12 @@ app.get('/api/orders', authenticateUser, async (req, res) => {
     const isAdmin = userEmail.toLowerCase() === envAdminEmail.toLowerCase();
 
     if (isPlaceholder) {
-      const filtered = isAdmin ? mockOrders : mockOrders.filter(o => o.user_id === req.user.id);
+      const filtered = mockOrders.filter(o => o.payment_status === 'paid' && (isAdmin || o.user_id === req.user.id));
       return res.json(filtered);
     }
 
     const client = getSupabaseClient(req);
-    let query = client.from('orders').select('*');
+    let query = client.from('orders').select('*').eq('payment_status', 'paid');
 
     if (!isAdmin) {
       // Query to ensure the customer only views their own orders
@@ -245,7 +257,239 @@ app.get('/api/orders', authenticateUser, async (req, res) => {
   }
 });
 
-// Submit a new order
+// Initiate Razorpay payment and save order in pending status
+app.post('/api/orders/initiate', authenticateUser, async (req, res) => {
+  try {
+    const orderPayloads = req.body;
+    const items = Array.isArray(orderPayloads) ? orderPayloads : [orderPayloads];
+
+    if (items.length === 0) {
+      return res.status(400).json({ error: 'No items in order payload' });
+    }
+
+    let totalAmount = 0;
+
+    // Server-side validation and price summation
+    for (const item of items) {
+      if (!item.product_id || !item.product_title || !item.price || !item.quantity) {
+        return res.status(400).json({ error: 'Invalid order data: missing required fields' });
+      }
+      if (item.quantity <= 0 || item.price <= 0) {
+        return res.status(400).json({ error: 'Invalid quantity or price value' });
+      }
+      
+      totalAmount += parseFloat(item.price) * item.quantity;
+      
+      // Inject authenticated user parameters and status flags
+      item.user_id = req.user.id;
+      item.user_email = req.user.email || '';
+      item.status = 'pending';
+      item.payment_status = 'pending';
+    }
+
+    // Create Razorpay Order
+    let razorpayOrderId = `mock-rzp-order-${Date.now()}`;
+    let finalAmountPaise = Math.round(totalAmount * 100);
+
+    if (!isPlaceholder) {
+      try {
+        const rzpOrder = await razorpay.orders.create({
+          amount: finalAmountPaise,
+          currency: 'INR',
+          receipt: `rcpt_${Date.now()}`
+        });
+        razorpayOrderId = rzpOrder.id;
+        finalAmountPaise = rzpOrder.amount;
+      } catch (rzpErr) {
+        console.error('Error creating order in Razorpay:', rzpErr);
+        return res.status(500).json({ error: 'Razorpay order creation failed' });
+      }
+    }
+
+    // Inject razorpay_order_id in all items
+    const itemsToSave = items.map(item => ({
+      ...item,
+      razorpay_order_id: razorpayOrderId
+    }));
+
+    if (isPlaceholder) {
+      const createdItems = itemsToSave.map(item => {
+        const order = {
+          ...item,
+          id: `mock-order-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        mockOrders.unshift(order);
+        return order;
+      });
+      return res.status(201).json({
+        razorpay_order_id: razorpayOrderId,
+        amount: finalAmountPaise,
+        currency: 'INR',
+        orders: createdItems
+      });
+    }
+
+    const client = getSupabaseClient(req);
+    const { data, error } = await client.from('orders').insert(itemsToSave).select();
+    if (error) throw error;
+
+    res.status(201).json({
+      razorpay_order_id: razorpayOrderId,
+      amount: finalAmountPaise,
+      currency: 'INR',
+      orders: data
+    });
+  } catch (err) {
+    console.error('Error initiating order payment:', err);
+    res.status(500).json({ error: 'Failed to initiate order payment' });
+  }
+});
+
+// Verify signature directly from frontend handler
+app.post('/api/orders/verify', authenticateUser, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ error: 'Missing verification fields' });
+    }
+
+    if (isPlaceholder) {
+      // Auto verify in placeholder mode
+      const idxs = [];
+      mockOrders.forEach((o, i) => {
+        if (o.razorpay_order_id === razorpay_order_id) {
+          o.payment_status = 'paid';
+          o.status = 'processing';
+          o.razorpay_payment_id = razorpay_payment_id;
+          o.razorpay_signature = razorpay_signature;
+          o.updated_at = new Date().toISOString();
+          idxs.push(i);
+        }
+      });
+      if (idxs.length > 0) {
+        return res.json({ status: 'success' });
+      }
+      return res.status(404).json({ error: 'Mock order not found' });
+    }
+
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!key_secret) {
+      return res.status(500).json({ error: 'Razorpay secret key is not configured' });
+    }
+
+    const text = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', key_secret)
+      .update(text)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      // Mark as failed in DB
+      const client = getSupabaseClient(req);
+      await client
+        .from('orders')
+        .update({ payment_status: 'failed' })
+        .eq('razorpay_order_id', razorpay_order_id);
+      
+      return res.status(400).json({ error: 'Signature verification failed' });
+    }
+
+    // Success: Update order status to paid and processing
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        status: 'processing',
+        razorpay_payment_id,
+        razorpay_signature
+      })
+      .eq('razorpay_order_id', razorpay_order_id)
+      .select();
+
+    if (error) throw error;
+    res.json({ status: 'success', orders: data });
+  } catch (err) {
+    console.error('Error verifying signature:', err);
+    res.status(500).json({ error: 'Failed to verify payment signature' });
+  }
+});
+
+// Webhook endpoint to receive payments asynchronously from Razorpay
+app.post('/api/orders/webhook', async (req, res) => {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+
+    if (!signature) {
+      return res.status(400).json({ error: 'Webhook signature missing' });
+    }
+
+    if (!webhookSecret) {
+      console.warn('RAZORPAY_WEBHOOK_SECRET not set, bypassing verification in development/test');
+    } else {
+      const shasum = crypto.createHmac('sha256', webhookSecret);
+      shasum.update(req.rawBody);
+      const digest = shasum.digest('hex');
+
+      if (digest !== signature) {
+        console.warn('Webhook verification failed: digest mismatch');
+        return res.status(400).json({ error: 'Webhook signature verification failed' });
+      }
+    }
+
+    const eventData = req.body;
+    
+    // We handle 'order.paid' or 'payment.captured'
+    if (eventData.event === 'order.paid' || eventData.event === 'payment.captured') {
+      const paymentEntity = eventData.payload?.payment?.entity;
+      const orderEntity = eventData.payload?.order?.entity;
+      const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id;
+      const razorpayPaymentId = paymentEntity?.id;
+
+      if (razorpayOrderId) {
+        console.log(`[Webhook] Processing successful payment for order ID: ${razorpayOrderId}`);
+
+        if (isPlaceholder) {
+          mockOrders.forEach(o => {
+            if (o.razorpay_order_id === razorpayOrderId) {
+              o.payment_status = 'paid';
+              o.status = 'processing';
+              o.razorpay_payment_id = razorpayPaymentId;
+              o.updated_at = new Date().toISOString();
+            }
+          });
+        } else {
+          // Update orders table with service role client to bypass policies
+          const { error } = await supabaseAdmin
+            .from('orders')
+            .update({
+              payment_status: 'paid',
+              status: 'processing',
+              razorpay_payment_id: razorpayPaymentId
+            })
+            .eq('razorpay_order_id', razorpayOrderId);
+
+          if (error) {
+            console.error('[Webhook] Database update failed:', error);
+            throw error;
+          }
+          console.log(`[Webhook] Updated orders successfully in DB for: ${razorpayOrderId}`);
+        }
+      }
+    }
+
+    res.status(200).json({ status: 'ok' });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Legacy direct checkout endpoint (retained for backward compatibility or testing)
 app.post('/api/orders', authenticateUser, async (req, res) => {
   try {
     const orderPayloads = req.body;
@@ -264,6 +508,7 @@ app.post('/api/orders', authenticateUser, async (req, res) => {
       item.user_id = req.user.id;
       item.user_email = req.user.email || '';
       item.status = 'pending';
+      item.payment_status = 'paid'; // direct orders default to paid
     }
 
     if (isPlaceholder) {
@@ -284,6 +529,7 @@ app.post('/api/orders', authenticateUser, async (req, res) => {
     const { data, error } = await client.from('orders').insert(items).select();
     if (error) throw error;
     res.status(201).json(data);
+
   } catch (err) {
     console.error('Error placing order:', err);
     res.status(500).json({ error: 'Failed to save order' });
@@ -329,7 +575,7 @@ app.put('/api/orders/:id/status', authenticateUser, requireAdmin, async (req, re
 // Admin-only product publishing endpoint
 app.post('/api/products', authenticateUser, requireAdmin, async (req, res) => {
   try {
-    const { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular } = req.body;
+    const { title, description, price, price_4in, price_6in, price_8in, image, images, collection_id, is_popular } = req.body;
     if (!title || !image || !price) {
       return res.status(400).json({ error: 'Missing title, price, or image' });
     }
@@ -337,13 +583,13 @@ app.post('/api/products', authenticateUser, requireAdmin, async (req, res) => {
     if (isPlaceholder) {
       const newProd = {
         id: Date.now(),
-        title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular,
+        title, description, price, price_4in, price_6in, price_8in, image, images: images || [], collection_id, is_popular,
         rating: 4.8, reviews: 45
       };
       return res.status(201).json(newProd);
     }
 
-    const payload = { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular };
+    const payload = { title, description, price, price_4in, price_6in, price_8in, image, images: images || [], collection_id, is_popular };
     const filteredPayload = await getFilteredPayload('products', payload);
     
     const client = getSupabaseClient(req);
@@ -360,13 +606,13 @@ app.post('/api/products', authenticateUser, requireAdmin, async (req, res) => {
 app.put('/api/products/:id', authenticateUser, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular } = req.body;
+    const { title, description, price, price_4in, price_6in, price_8in, image, images, collection_id, is_popular } = req.body;
 
     if (isPlaceholder) {
-      return res.json({ id: Number(id), title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular });
+      return res.json({ id: Number(id), title, description, price, price_4in, price_6in, price_8in, image, images: images || [], collection_id, is_popular });
     }
 
-    const payload = { title, description, price, price_4in, price_6in, price_8in, image, collection_id, is_popular };
+    const payload = { title, description, price, price_4in, price_6in, price_8in, image, images: images || [], collection_id, is_popular };
     const filteredPayload = await getFilteredPayload('products', payload);
 
     const client = getSupabaseClient(req);
