@@ -36,14 +36,14 @@ const razorpay = new Razorpay({
 
 const getSupabaseClient = (req) => {
   if (isPlaceholder) return supabase;
-  
+
   if (hasServiceKey) {
     return supabaseAdmin;
   }
-  
+
   const authHeader = req?.headers?.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-  
+
   if (token) {
     return createClient(supabaseUrl, supabaseAnonKey, {
       global: {
@@ -53,7 +53,7 @@ const getSupabaseClient = (req) => {
       }
     });
   }
-  
+
   return supabase;
 };
 
@@ -67,11 +67,11 @@ const getFilteredPayload = async (table, payload) => {
       products: ['title', 'description', 'price', 'price_4in', 'price_6in', 'price_8in', 'image', 'images', 'collection_id', 'is_popular', 'rating', 'reviews'],
       orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status']
     };
-    
+
     const { data } = await supabase.from(table).select().limit(1);
     const dbColumns = (data && data.length > 0) ? Object.keys(data[0]) : [];
     const validColumns = Array.from(new Set([...dbColumns, ...(defaults[table] || [])]));
-    
+
     const filtered = {};
     for (const key of Object.keys(payload)) {
       if (validColumns.includes(key) && payload[key] !== undefined) {
@@ -110,7 +110,7 @@ const authenticateUser = async (req, res, next) => {
       return res.status(401).json({ error: 'Authorization header missing or invalid' });
     }
     const token = authHeader.split(' ')[1];
-    
+
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid or expired session token' });
@@ -242,7 +242,7 @@ app.get('/api/orders', authenticateUser, async (req, res) => {
         .select('role')
         .eq('user_id', req.user.id)
         .single();
-      
+
       if (!roleCheck || roleCheck.role !== 'admin') {
         query = query.eq('user_id', req.user.id);
       }
@@ -277,9 +277,9 @@ app.post('/api/orders/initiate', authenticateUser, async (req, res) => {
       if (item.quantity <= 0 || item.price <= 0) {
         return res.status(400).json({ error: 'Invalid quantity or price value' });
       }
-      
+
       totalAmount += parseFloat(item.price) * item.quantity;
-      
+
       // Inject authenticated user parameters and status flags
       item.user_id = req.user.id;
       item.user_email = req.user.email || '';
@@ -393,7 +393,7 @@ app.post('/api/orders/verify', authenticateUser, async (req, res) => {
         .from('orders')
         .update({ payment_status: 'failed' })
         .eq('razorpay_order_id', razorpay_order_id);
-      
+
       return res.status(400).json({ error: 'Signature verification failed' });
     }
 
@@ -442,7 +442,7 @@ app.post('/api/orders/webhook', async (req, res) => {
     }
 
     const eventData = req.body;
-    
+
     // We handle 'order.paid' or 'payment.captured'
     if (eventData.event === 'order.paid' || eventData.event === 'payment.captured') {
       const paymentEntity = eventData.payload?.payment?.entity;
@@ -503,7 +503,7 @@ app.post('/api/orders', authenticateUser, async (req, res) => {
       if (item.quantity <= 0 || item.price <= 0) {
         return res.status(400).json({ error: 'Invalid quantity or price value' });
       }
-      
+
       // Inject authenticated user parameters
       item.user_id = req.user.id;
       item.user_email = req.user.email || '';
@@ -591,7 +591,7 @@ app.post('/api/products', authenticateUser, requireAdmin, async (req, res) => {
 
     const payload = { title, description, price, price_4in, price_6in, price_8in, image, images: images || [], collection_id, is_popular };
     const filteredPayload = await getFilteredPayload('products', payload);
-    
+
     const client = getSupabaseClient(req);
     const { data, error } = await client.from('products').insert([filteredPayload]).select();
     if (error) throw error;
