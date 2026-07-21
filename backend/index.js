@@ -56,7 +56,7 @@ const initClients = () => {
 
   const key_id = getEnv('RAZORPAY_KEY_ID') || 'placeholder_key_id';
   const key_secret = getEnv('RAZORPAY_KEY_SECRET') || 'placeholder_key_secret';
-  
+
   razorpay = new Razorpay({
     key_id,
     key_secret,
