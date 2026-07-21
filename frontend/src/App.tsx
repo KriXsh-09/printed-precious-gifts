@@ -219,7 +219,7 @@ function App() {
   // API base URL
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : (import.meta.env.VITE_API_BASE_URL || 'https://giftworld-backend.onrender.com');
+    : (import.meta.env.VITE_API_BASE_URL || 'https://giftworldonline.giftworldonlineofficial.workers.dev');
 
   // Cart, Auth & Products States
   const [user, setUser] = useState<any>(null);
