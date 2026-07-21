@@ -65,7 +65,7 @@ const getFilteredPayload = async (table, payload) => {
   try {
     const defaults = {
       products: ['title', 'description', 'price', 'price_4in', 'price_6in', 'price_8in', 'image', 'images', 'collection_id', 'is_popular', 'rating', 'reviews'],
-      orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status']
+      orders: ['user_id', 'user_email', 'customer_name', 'mobile_number', 'address', 'product_id', 'product_title', 'product_image', 'selected_size', 'custom_photo_url', 'price', 'quantity', 'status', 'payment_status', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature']
     };
 
     const { data } = await supabase.from(table).select().limit(1);
@@ -331,9 +331,18 @@ app.post('/api/orders/initiate', authenticateUser, async (req, res) => {
       });
     }
 
-    const client = getSupabaseClient(req);
-    const { data, error } = await client.from('orders').insert(itemsToSave).select();
-    if (error) throw error;
+    // Use admin client to bypass RLS policies for server-side order creation
+    const filteredItems = [];
+    for (const item of itemsToSave) {
+      const filtered = await getFilteredPayload('orders', item);
+      filteredItems.push(filtered);
+    }
+
+    const { data, error } = await supabaseAdmin.from('orders').insert(filteredItems).select();
+    if (error) {
+      console.error('Supabase insert error details:', JSON.stringify(error));
+      throw error;
+    }
 
     res.status(201).json({
       razorpay_order_id: razorpayOrderId,
@@ -343,7 +352,7 @@ app.post('/api/orders/initiate', authenticateUser, async (req, res) => {
     });
   } catch (err) {
     console.error('Error initiating order payment:', err);
-    res.status(500).json({ error: 'Failed to initiate order payment' });
+    res.status(500).json({ error: 'Failed to initiate order payment', details: err?.message || String(err) });
   }
 });
 
