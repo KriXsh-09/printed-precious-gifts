@@ -34,21 +34,43 @@ console.log('Env Check - SUPABASE_SERVICE_ROLE_KEY:', !!getEnv('SUPABASE_SERVICE
 console.log('Env Check - RAZORPAY_KEY_ID:', !!getEnv('RAZORPAY_KEY_ID'));
 console.log('Env Check - RAZORPAY_KEY_SECRET:', !!getEnv('RAZORPAY_KEY_SECRET'));
 
-// Initialize Supabase Clients
-const supabaseUrl = getEnv('SUPABASE_URL') || 'https://placeholder-project-id.supabase.co';
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY') || 'placeholder-anon-key';
-const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY') || 'placeholder-service-role-key';
+// Declare placeholder variables to be initialized lazily
+let supabaseUrl, supabaseAnonKey, supabaseServiceRoleKey;
+let isPlaceholder = true;
+let hasServiceKey = false;
+let supabase, supabaseAdmin, razorpay;
+let initialized = false;
 
-const isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder');
+const initClients = () => {
+  if (initialized) return;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const hasServiceKey = supabaseServiceRoleKey && supabaseServiceRoleKey !== 'placeholder-service-role-key';
-const supabaseAdmin = hasServiceKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : supabase;
+  supabaseUrl = getEnv('SUPABASE_URL') || 'https://placeholder-project-id.supabase.co';
+  supabaseAnonKey = getEnv('SUPABASE_ANON_KEY') || 'placeholder-anon-key';
+  supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY') || 'placeholder-service-role-key';
 
-// Initialize Razorpay Client
-const razorpay = new Razorpay({
-  key_id: getEnv('RAZORPAY_KEY_ID') || 'placeholder_key_id',
-  key_secret: getEnv('RAZORPAY_KEY_SECRET') || 'placeholder_key_secret',
+  isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder');
+
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  hasServiceKey = supabaseServiceRoleKey && supabaseServiceRoleKey !== 'placeholder-service-role-key';
+  supabaseAdmin = hasServiceKey ? createClient(supabaseUrl, supabaseServiceRoleKey) : supabase;
+
+  const key_id = getEnv('RAZORPAY_KEY_ID') || 'placeholder_key_id';
+  const key_secret = getEnv('RAZORPAY_KEY_SECRET') || 'placeholder_key_secret';
+  
+  razorpay = new Razorpay({
+    key_id,
+    key_secret,
+  });
+
+  initialized = true;
+  console.log('Lazy Client Init - SUPABASE_URL:', supabaseUrl);
+  console.log('Lazy Client Init - RAZORPAY_KEY_ID:', key_id);
+};
+
+// Middleware to ensure clients are initialized on first request
+app.use((req, res, next) => {
+  initClients();
+  next();
 });
 
 
