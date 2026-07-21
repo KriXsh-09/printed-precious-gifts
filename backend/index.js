@@ -5,8 +5,19 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 
+// Helper to safely get environment variables across Node.js and Cloudflare Workers
+const getEnv = (key) => {
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  if (typeof globalThis !== 'undefined' && globalThis[key]) {
+    return globalThis[key];
+  }
+  return '';
+};
+
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = getEnv('PORT') || 5000;
 
 app.use(cors());
 app.use(express.json({
@@ -16,10 +27,17 @@ app.use(express.json({
 }));
 
 
+// Log environment variable status (without exposing secrets)
+console.log('Env Check - SUPABASE_URL:', !!getEnv('SUPABASE_URL'));
+console.log('Env Check - SUPABASE_ANON_KEY:', !!getEnv('SUPABASE_ANON_KEY'));
+console.log('Env Check - SUPABASE_SERVICE_ROLE_KEY:', !!getEnv('SUPABASE_SERVICE_ROLE_KEY'));
+console.log('Env Check - RAZORPAY_KEY_ID:', !!getEnv('RAZORPAY_KEY_ID'));
+console.log('Env Check - RAZORPAY_KEY_SECRET:', !!getEnv('RAZORPAY_KEY_SECRET'));
+
 // Initialize Supabase Clients
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder-project-id.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-role-key';
+const supabaseUrl = getEnv('SUPABASE_URL') || 'https://placeholder-project-id.supabase.co';
+const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY') || 'placeholder-anon-key';
+const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY') || 'placeholder-service-role-key';
 
 const isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder');
 
@@ -29,8 +47,8 @@ const supabaseAdmin = hasServiceKey ? createClient(supabaseUrl, supabaseServiceR
 
 // Initialize Razorpay Client
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'placeholder_key_id',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder_key_secret',
+  key_id: getEnv('RAZORPAY_KEY_ID') || 'placeholder_key_id',
+  key_secret: getEnv('RAZORPAY_KEY_SECRET') || 'placeholder_key_secret',
 });
 
 
@@ -126,7 +144,7 @@ const authenticateUser = async (req, res, next) => {
 // Admin authentication verification middleware
 const requireAdmin = async (req, res, next) => {
   const userEmail = req.user?.email || '';
-  const envAdminEmail = process.env.ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
+  const envAdminEmail = getEnv('ADMIN_EMAIL') || 'giftworldonlineofficial@gmail.com';
 
   // 1. Core verification check: matches env admin email
   if (userEmail.toLowerCase() === envAdminEmail.toLowerCase()) {
@@ -189,7 +207,7 @@ app.get('/api/auth/role', authenticateUser, async (req, res) => {
   try {
     const userId = req.user.id;
     const userEmail = req.user.email || '';
-    const envAdminEmail = process.env.ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
+    const envAdminEmail = getEnv('ADMIN_EMAIL') || 'giftworldonlineofficial@gmail.com';
 
     // Env admin match -> Automatically assure admin role is populated inDB
     if (userEmail.toLowerCase() === envAdminEmail.toLowerCase()) {
@@ -224,7 +242,7 @@ app.get('/api/auth/role', authenticateUser, async (req, res) => {
 app.get('/api/orders', authenticateUser, async (req, res) => {
   try {
     const userEmail = req.user.email || '';
-    const envAdminEmail = process.env.ADMIN_EMAIL || 'giftworldonlineofficial@gmail.com';
+    const envAdminEmail = getEnv('ADMIN_EMAIL') || 'giftworldonlineofficial@gmail.com';
     const isAdmin = userEmail.toLowerCase() === envAdminEmail.toLowerCase();
 
     if (isPlaceholder) {
@@ -384,7 +402,7 @@ app.post('/api/orders/verify', authenticateUser, async (req, res) => {
       return res.status(404).json({ error: 'Mock order not found' });
     }
 
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_secret = getEnv('RAZORPAY_KEY_SECRET');
     if (!key_secret) {
       return res.status(500).json({ error: 'Razorpay secret key is not configured' });
     }
@@ -430,7 +448,7 @@ app.post('/api/orders/verify', authenticateUser, async (req, res) => {
 // Webhook endpoint to receive payments asynchronously from Razorpay
 app.post('/api/orders/webhook', async (req, res) => {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecret = getEnv('RAZORPAY_WEBHOOK_SECRET');
     const signature = req.headers['x-razorpay-signature'];
 
     if (!signature) {
