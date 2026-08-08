@@ -59,9 +59,9 @@ interface MostPopularProps {
 }
 
 export const MostPopular: React.FC<MostPopularProps> = ({ onAddToCart, popularProducts = defaultPopularProducts }) => {
-  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<number, number>>({});
+  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string | number, number>>({});
 
-  const handleMouseEnter = (productId: number, imageCount: number) => {
+  const handleMouseEnter = (productId: number | string, imageCount: number) => {
     if (imageCount > 1) {
       setActiveImageIndexes(prev => ({
         ...prev,
@@ -70,7 +70,7 @@ export const MostPopular: React.FC<MostPopularProps> = ({ onAddToCart, popularPr
     }
   };
 
-  const handleMouseLeave = (productId: number) => {
+  const handleMouseLeave = (productId: number | string) => {
     setActiveImageIndexes(prev => ({
       ...prev,
       [productId]: 0

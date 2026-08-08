@@ -46,7 +46,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
   products,
   onAddToCart,
 }) => {
-  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<number, number>>({});
+  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string | number, number>>({});
 
   const meta = collectionMeta[collectionId] || {
     title: 'Products',
@@ -62,7 +62,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
      (p.collection_id === 'vault' || p.collection_id === 'readymade' || p.collection_id === 'lamps'))
   );
 
-  const handleMouseEnter = (productId: number, imageCount: number) => {
+  const handleMouseEnter = (productId: number | string, imageCount: number) => {
     if (imageCount > 1) {
       setActiveImageIndexes(prev => ({
         ...prev,
@@ -71,7 +71,7 @@ export const CollectionView: React.FC<CollectionViewProps> = ({
     }
   };
 
-  const handleMouseLeave = (productId: number) => {
+  const handleMouseLeave = (productId: number | string) => {
     setActiveImageIndexes(prev => ({
       ...prev,
       [productId]: 0

@@ -7,7 +7,7 @@ export interface Review {
   id: string;
   user_id: string;
   user_name: string;
-  product_id: number;
+  product_id: number | string;
   product_title: string;
   product_image: string;
   rating: number;
@@ -31,14 +31,14 @@ export const Reviews: React.FC<ReviewsProps> = ({
   onOpenAuth,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<number>(products[0]?.id || 0);
+  const [selectedProductId, setSelectedProductId] = useState<number | string>(products[0]?.id || 0);
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [purchasedProductIds, setPurchasedProductIds] = useState<number[]>([]);
+  const [purchasedProductIds, setPurchasedProductIds] = useState<(number | string)[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export const Reviews: React.FC<ReviewsProps> = ({
         
         if (error) throw error;
         
-        const ids = data ? Array.from(new Set(data.map((o: any) => Number(o.product_id)))) : [];
+        const ids = data ? Array.from(new Set(data.map((o: any) => o.product_id))) : [];
         setPurchasedProductIds(ids);
       } catch (err) {
         console.error('Error fetching purchased products for review check:', err);
@@ -75,8 +75,8 @@ export const Reviews: React.FC<ReviewsProps> = ({
     fetchPurchasedProducts();
   }, [currentUser, isModalOpen]);
 
-  const reviewableProducts = products.filter((p) => purchasedProductIds.includes(p.id));
-  const selectedProduct = reviewableProducts.find((p) => p.id === Number(selectedProductId));
+  const reviewableProducts = products.filter((p) => purchasedProductIds.some((id) => String(id) === String(p.id)));
+  const selectedProduct = reviewableProducts.find((p) => String(p.id) === String(selectedProductId));
 
   const handleOpenWriteReview = () => {
     if (!currentUser) {
@@ -260,7 +260,7 @@ export const Reviews: React.FC<ReviewsProps> = ({
                     <select
                       id="review-product"
                       value={selectedProductId}
-                      onChange={(e) => setSelectedProductId(Number(e.target.value))}
+                      onChange={(e) => setSelectedProductId(e.target.value)}
                       required
                     >
                       {reviewableProducts.map((p) => (

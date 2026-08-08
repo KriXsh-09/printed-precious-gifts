@@ -3,7 +3,7 @@ import * as Icons from 'lucide-react';
 
 export interface CartItem {
   cartItemId: string;
-  id: number;
+  id: number | string;
   title: string;
   price: number;
   image: string;
