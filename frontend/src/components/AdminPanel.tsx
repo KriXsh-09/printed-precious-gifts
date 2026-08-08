@@ -25,8 +25,8 @@ interface Order {
 interface AdminPanelProps {
   products: Product[];
   onAddProduct: (product: Omit<Product, 'id' | 'rating' | 'reviews'>) => void;
-  onUpdateProduct: (id: number, product: Partial<Product>) => void;
-  onDeleteProduct: (id: number) => void;
+  onUpdateProduct: (id: number | string, product: Partial<Product>) => void;
+  onDeleteProduct: (id: number | string) => void;
 }
 
 const collectionsList = [
@@ -291,7 +291,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setIsFormOpen(false);
   };
 
-  const handleDelete = (id: number, productTitle: string) => {
+  const handleDelete = (e: React.MouseEvent, id: number | string, productTitle: string) => {
+    e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete "${productTitle}"?`)) {
       onDeleteProduct(id);
     }
@@ -464,7 +465,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             <button className="admin-action-btn edit" onClick={() => openEditForm(product)} aria-label="Edit product">
                               <Icons.Edit2 size={15} />
                             </button>
-                            <button className="admin-action-btn delete" onClick={() => handleDelete(product.id, product.title)} aria-label="Delete product">
+                            <button type="button" className="admin-action-btn delete" onClick={(e) => handleDelete(e, product.id, product.title)} aria-label="Delete product">
                               <Icons.Trash2 size={15} />
                             </button>
                           </div>

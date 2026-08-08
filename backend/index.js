@@ -689,7 +689,8 @@ app.delete('/api/products/:id', authenticateUser, requireAdmin, async (req, res)
     }
 
     const client = getSupabaseClient(req);
-    const { error } = await client.from('products').delete().eq('id', Number(id));
+    const targetId = isNaN(Number(id)) ? id : Number(id);
+    const { error } = await client.from('products').delete().eq('id', targetId);
     if (error) throw error;
     res.json({ message: 'Product deleted successfully' });
   } catch (err) {

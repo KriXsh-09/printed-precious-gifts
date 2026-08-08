@@ -35,7 +35,7 @@ interface BackendData {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   price: number;
@@ -590,7 +590,7 @@ function App() {
     }
   };
 
-  const handleUpdateProduct = async (id: number, updatedFields: Partial<Product>) => {
+  const handleUpdateProduct = async (id: number | string, updatedFields: Partial<Product>) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -606,12 +606,12 @@ function App() {
       if (!res.ok) throw new Error('Backend update failed');
       
       const updatedProduct = await res.json();
-      const updated = products.map((p) => (p.id === id ? { ...p, ...updatedProduct } : p));
+      const updated = products.map((p) => (String(p.id) === String(id) ? { ...p, ...updatedProduct } : p));
       setProducts(updated);
       localStorage.setItem('giftworld_products', JSON.stringify(updated));
     } catch (err) {
       console.warn('Backend API update product failed, using client fallback. Error:', err);
-      const updated = products.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+      const updated = products.map((p) => (String(p.id) === String(id) ? { ...p, ...updatedFields } : p));
       setProducts(updated);
       localStorage.setItem('giftworld_products', JSON.stringify(updated));
 
@@ -625,7 +625,7 @@ function App() {
     }
   };
 
-  const handleDeleteProduct = async (id: number) => {
+  const handleDeleteProduct = async (id: number | string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -638,12 +638,12 @@ function App() {
       });
       if (!res.ok) throw new Error('Backend deletion failed');
       
-      const updated = products.filter((p) => p.id !== id);
+      const updated = products.filter((p) => String(p.id) !== String(id));
       setProducts(updated);
       localStorage.setItem('giftworld_products', JSON.stringify(updated));
     } catch (err) {
       console.warn('Backend API delete product failed, using client fallback. Error:', err);
-      const updated = products.filter((p) => p.id !== id);
+      const updated = products.filter((p) => String(p.id) !== String(id));
       setProducts(updated);
       localStorage.setItem('giftworld_products', JSON.stringify(updated));
 
