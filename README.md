@@ -142,10 +142,9 @@ npm run dev
 
 ## 🖼️ Screenshots
 
-_Add screenshots here: Home, Collection view, Customize modal, Cart, Razorpay checkout, My Orders, Admin Panel._
-
 ```md
-![Home](screenshots/home.png)
+<img width="1312" height="631" alt="Screenshot From 2026-09-24 14-41-28" src="https://github.com/user-attachments/assets/f0c03ec6-dbfc-471c-b556-4b43dcb3e642" />
+
 ```
 
 ---
@@ -162,6 +161,5 @@ _Add screenshots here: Home, Collection view, Customize modal, Cart, Razorpay ch
 
 ## 👤 Author
 
-**Krishna Raj Prince** (2303051050385)
-Supervisor: Sinal Patel
-Parul Institute of Technology, Parul University
+**Krishna Raj Prince**
+
